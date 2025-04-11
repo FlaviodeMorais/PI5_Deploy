@@ -124,7 +124,7 @@ export function PumpControl({ latestReading, isLoading }: PumpControlProps) {
           <i className={`fas fa-wind ${isOn ? 'text-white glow-text' : 'text-gray-400'}`}></i>
         </div>
         <div className="flex-1">
-          <h4 className="text-white/70 text-sm font-light mb-1">Bomba d'água</h4>
+          <h4 className="text-white text-2xl font-semibold mb-1">Bomba d'água</h4>
           <div className={`text-base sm:text-lg font-light ${isOn ? 'text-green-400 glow-text' : 'text-gray-400'} mb-1`}>
             {isLoading ? 'Carregando...' : statusText}
           </div>

@@ -124,7 +124,7 @@ export function HeaterControl({ latestReading, isLoading }: HeaterControlProps) 
           <i className={`fas fa-fire ${isOn ? 'text-white glow-text' : 'text-gray-400'}`}></i>
         </div>
         <div className="flex-1">
-          <h4 className="text-white/70 text-sm font-light mb-1">Aquecedor</h4>
+          <h4 className="text-white text-2xl font-semibold mb-1">Aquecedor</h4>
           <div className={`text-base sm:text-lg font-light ${isOn ? 'text-orange-400 glow-text' : 'text-gray-400'} mb-1`}>
             {isLoading ? 'Carregando...' : statusText}
           </div>
