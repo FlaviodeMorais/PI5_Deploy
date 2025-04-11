@@ -168,7 +168,7 @@ export function HeaterControl({ latestReading, isLoading }: HeaterControlProps) 
             disabled={toggleHeaterMutation.isPending || (latestReading?.temperature === SENSOR_ERROR_VALUE)}
           >
             <i className="fas fa-power-off mr-2"></i>
-            <span className="text-sm sm:text-base">{isOn ? 'Ligado' : 'Desligado'}</span>
+            <span className="text-sm sm:text-base">{isOn ? 'Desligar' : 'Ligar'}</span>
           </Button>
         </div>
       </div>
