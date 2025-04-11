@@ -846,7 +846,7 @@ async function setupVite(app2, server) {
   });
 }
 function serveStatic(app2) {
-  const distPath = path3.resolve(__dirname3, "..", "dist");
+  const distPath = path3.resolve(__dirname3, "..", "dist", "public");
   if (!fs2.existsSync(distPath)) {
     console.warn(`\u26A0\uFE0F Build directory not found: ${distPath}. Only API routes will work.`);
     return;
