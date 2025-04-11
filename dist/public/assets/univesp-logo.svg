@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="130" viewBox="0 0 220 130" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g transform="scale(1.0)">
+    <!-- Fill with dark blue color to match UNIVESP branding -->
+    <path d="M18 44.5C18 35.8 25.1 30 34 30H186C195 30 202 35.8 202 44.5V84.5C202 93.2 195 99 186 99H34C25.1 99 18 93.2 18 84.5V44.5Z" fill="#00417A"/>
+    
+    <!-- UNIVESP letters -->
+    <text x="33" y="75" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#FFFFFF">UNIVESP</text>
+    
+    <!-- Small text -->
+    <text x="50" y="115" font-family="Arial, sans-serif" font-size="16" fill="#00417A">Universidade Virtual do Estado de São Paulo</text>
+  </g>
+</svg>
