@@ -52,11 +52,6 @@ export function Layout({ children }: LayoutProps) {
             {children}
           </div>
         </main>
-        
-        {/* Footer estilizado */}
-        <footer className="bg-[#0a1e3a]/80 backdrop-blur-sm border-t border-white/10 py-4 px-6 text-center text-sm text-white/60">
-          <p>Sistema de Monitoramento Aquapônico &copy; {new Date().getFullYear()} - UNIVESP - DRP04-PJI510-SALA-001GRUPO-012</p>
-        </footer>
       </div>
     </div>
   );
