@@ -102,9 +102,10 @@ export function RechartsWaterLevelChart({
             stroke="#8a94a7" 
             fontSize={11}
             tickMargin={10}
-            domain={[0, 100]}
+            domain={[0, 100]} 
             axisLine={{ stroke: 'rgba(255, 255, 255, 0.1)' }}
             unit="%"
+            ticks={[0, 20, 40, 60, 80, 100]} 
           />
           <Tooltip content={<CustomTooltip />} />
           <Legend wrapperStyle={{ paddingTop: '10px' }} />

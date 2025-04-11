@@ -267,15 +267,15 @@ export function HistoricalData() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mt-4 sm:mt-6">
               <div className="bg-[#0f172a] border border-white/5 p-3 sm:p-4 rounded-md">
                 <p className="text-xs sm:text-sm text-gray-400 mb-1">Média</p>
-                <p className="text-base sm:text-xl font-semibold">{formatNumber(processedData.stats.level.avg)}%</p>
+                <p className="text-base sm:text-xl font-semibold">{formatNumber(Math.min(Math.max(processedData.stats.level.avg, 0), 100))}%</p>
               </div>
               <div className="bg-[#0f172a] border border-white/5 p-3 sm:p-4 rounded-md">
                 <p className="text-xs sm:text-sm text-gray-400 mb-1">Mínima</p>
-                <p className="text-base sm:text-xl font-semibold">{formatNumber(processedData.stats.level.min)}%</p>
+                <p className="text-base sm:text-xl font-semibold">{formatNumber(Math.max(processedData.stats.level.min, 0))}%</p>
               </div>
               <div className="bg-[#0f172a] border border-white/5 p-3 sm:p-4 rounded-md">
                 <p className="text-xs sm:text-sm text-gray-400 mb-1">Máxima</p>
-                <p className="text-base sm:text-xl font-semibold">{formatNumber(processedData.stats.level.max)}%</p>
+                <p className="text-base sm:text-xl font-semibold">{formatNumber(Math.min(processedData.stats.level.max, 100))}%</p>
               </div>
               <div className="bg-[#0f172a] border border-white/5 p-3 sm:p-4 rounded-md">
                 <p className="text-xs sm:text-sm text-gray-400 mb-1">Desvio Padrão</p>
