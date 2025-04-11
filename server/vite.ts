@@ -76,12 +76,12 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  const distPath = path.resolve(__dirname, "public");
+  const distPath = path.resolve(__dirname, "..", "dist");
 
   if (!fs.existsSync(distPath)) {
-    throw new Error(
-      `Could not find the build directory: ${distPath}, make sure to build the client first`,
-    );
+    console.warn(`⚠️ Build directory not found: ${distPath}. Only API routes will work.`);
+    // Não lançamos erro, apenas registramos aviso e continuamos com as rotas da API
+    return;
   }
 
   app.use(express.static(distPath));
