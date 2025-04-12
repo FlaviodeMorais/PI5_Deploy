@@ -63,10 +63,19 @@ export function formatDateTime(date: Date): string {
 
 // Format number to fixed decimal places
 export function formatNumber(value: number | null | undefined, decimals = 1): string {
-  if (value === null || value === undefined || isNaN(value)) {
-    return '0';
+  // Verificar valores nulos, undefined ou NaN
+  if (value === null || value === undefined || isNaN(Number(value))) {
+    return '0.00';
   }
-  return value.toFixed(decimals);
+  
+  try {
+    // Converter para número e garantir que é um valor numérico válido
+    const numValue = Number(value);
+    return numValue.toFixed(decimals);
+  } catch (error) {
+    console.error("Erro ao formatar número:", error);
+    return '0.00';
+  }
 }
 
 // Get the last N days date range
