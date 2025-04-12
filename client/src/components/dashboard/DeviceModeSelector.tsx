@@ -1,5 +1,6 @@
 
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { useDeviceMode } from '@/contexts/DeviceModeContext';
@@ -35,51 +36,48 @@ export function DeviceModeSelector() {
     try {
       setIsLoading(true);
       
-      // Se estamos mudando para modo emulador
       if (mode === 'NODEMCU') {
-        // Iniciar emulador se não estiver ativo
-        if (!emulatorStatus.enabled) {
-          const response = await fetch('/api/emulator/start', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              updateInterval: 5000,
-              mode: 'fluctuating',
-              scenarioName: "normal"
-            })
-          });
-          
-          if (!response.ok) {
-            throw new Error(`Falha ao iniciar o emulador: ${response.status}`);
-          }
-          
-          toast({
-            title: "Emulador iniciado",
-            description: "O modo de emulação foi ativado com sucesso.",
-          });
+        // Estamos mudando para o modo emulador
+        const response = await fetch('/api/emulator/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            updateInterval: 5000,
+            mode: 'fluctuating',
+            scenarioName: "normal"
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Falha ao iniciar o emulador: ${response.status}`);
         }
+        
+        toast({
+          title: "Emulador iniciado",
+          description: "O modo de emulação foi ativado com sucesso."
+        });
+        
+        // Mudar para modo emulador
+        toggleMode();
       } 
-      // Se estamos mudando para modo NodeMCU
-      else if (mode === 'EMULATOR') {
-        // Parar emulador se estiver ativo
-        if (emulatorStatus.enabled) {
-          const response = await fetch('/api/emulator/stop', {
-            method: 'POST'
-          });
-          
-          if (!response.ok) {
-            throw new Error(`Falha ao parar o emulador: ${response.status}`);
-          }
-          
-          toast({
-            title: "Emulador parado",
-            description: "O modo de emulação foi desativado com sucesso.",
-          });
+      else {
+        // Estamos mudando para modo NodeMCU
+        const response = await fetch('/api/emulator/stop', {
+          method: 'POST'
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Falha ao parar o emulador: ${response.status}`);
         }
+        
+        toast({
+          title: "Emulador parado",
+          description: "O modo de emulação foi desativado com sucesso."
+        });
+        
+        // Mudar para modo NodeMCU
+        toggleMode();
       }
-      
-      // Alterna o modo de operação
-      toggleMode();
     } catch (error) {
       console.error('Erro na alternância de modos:', error);
       toast({
