@@ -64,7 +64,7 @@ args = "git status"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "git commit -m \"Sincronização completa do projeto Aquaponia PI5 incluindo banco de dados\""
+args = "git commit -m \"Sincronização completa do projeto Aquaponia PI5, incluindo banco de dados e todas as alterações recentes\""
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
