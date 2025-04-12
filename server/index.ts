@@ -18,7 +18,7 @@ app.use((req, res, next) => {
   if (req.path.startsWith('/api')) {
     console.log(`[API Route] ${req.method} ${req.path} - Body:`, req.body);
   }
-
+  
   const start = Date.now();
   const path = req.path;
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
@@ -51,7 +51,7 @@ app.use((req, res, next) => {
 (async () => {
   // Registrar as rotas da API em um roteador separado
   const server = await registerRoutes(app, apiRouter);
-
+  
   // Montar o roteador da API antes de qualquer middleware do Vite
   app.use('/api', apiRouter);
 
@@ -76,13 +76,12 @@ app.use((req, res, next) => {
   // ALWAYS serve the app on port 5000
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const PORT = process.env.PORT || 5000;
-  const HOST = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
+  const port = 5000;
   server.listen({
-    port: PORT,
-    host: HOST,
+    port,
+    host: "0.0.0.0",
     reusePort: true,
   }, () => {
-    log(`serving on ${HOST}:${PORT}`);
+    log(`serving on port ${port}`);
   });
 })();

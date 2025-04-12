@@ -5,8 +5,7 @@ run = "npm run dev"
 channel = "stable-24_05"
 
 [deployment]
-run = ["sh", "-c", "node dist/index.js"]
-build = ["sh", "-c", "npm run build"]
+run = ["sh", "-c", "npm run dev"]
 
 [workflows]
 runButton = "Development"
@@ -79,23 +78,6 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "bash deploy.sh"
-
-[[workflows.workflow]]
-name = "Deploy Replit"
-author = 40607213
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "export NODE_ENV=production"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run build"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "node dist/index.js"
 
 [[ports]]
 localPort = 5000
