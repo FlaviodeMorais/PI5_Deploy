@@ -56,7 +56,19 @@ args = "git config --global user.email \"flaviodemorais@users.noreply.github.com
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "git add ."
+args = "git add --all"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "git reset -- *.db"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "git reset -- *.sqlite"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "git reset -- aquaponia.db"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
