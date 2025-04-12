@@ -9,17 +9,21 @@ import { Badge } from '@/components/ui/badge';
 export function DeviceModeSelector() {
   const { mode, toggleMode, isEmulatorEnabled, applySystemSettings } = useDeviceMode();
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = React.useState(false);
 
   const handleModeChange = async () => {
-    // Se estamos mudando para modo emulador e ele não está ativo, precisamos ativá-lo
-    if (mode === 'NODEMCU' && !isEmulatorEnabled) {
-      try {
+    try {
+      setIsLoading(true);
+      
+      // Se estamos mudando para modo emulador e ele não está ativo, precisamos ativá-lo
+      if (mode === 'NODEMCU' && !isEmulatorEnabled) {
         const response = await fetch('/api/emulator/start', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             updateInterval: 5000,
-            mode: 'fluctuating'
+            mode: 'fluctuating',
+            scenarioName: "normal"
           })
         });
         
@@ -31,19 +35,10 @@ export function DeviceModeSelector() {
           title: "Emulador iniciado",
           description: "O modo de emulação foi ativado com sucesso.",
         });
-      } catch (error) {
-        toast({
-          title: "Erro",
-          description: `Falha ao iniciar o emulador: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
-          variant: "destructive"
-        });
-        return;
       }
-    }
-    
-    // Se estamos mudando para NodeMCU e o emulador está ativo, vamos desativá-lo
-    if (mode === 'EMULATOR' && isEmulatorEnabled) {
-      try {
+      
+      // Se estamos mudando para NodeMCU e o emulador está ativo, vamos desativá-lo
+      if (mode === 'EMULATOR' && isEmulatorEnabled) {
         const response = await fetch('/api/emulator/stop', {
           method: 'POST'
         });
@@ -56,18 +51,19 @@ export function DeviceModeSelector() {
           title: "Emulador parado",
           description: "O modo de emulação foi desativado com sucesso.",
         });
-      } catch (error) {
-        toast({
-          title: "Erro",
-          description: `Falha ao parar o emulador: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
-          variant: "destructive"
-        });
-        return;
       }
+      
+      // Alterna o modo de operação
+      toggleMode();
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: `Falha ao alterar o modo: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
-    
-    // Alterna o modo de operação
-    toggleMode();
   };
 
   return (
@@ -88,6 +84,7 @@ export function DeviceModeSelector() {
             checked={mode === 'EMULATOR'} 
             onCheckedChange={handleModeChange}
             className="data-[state=checked]:bg-blue-600"
+            disabled={isLoading}
           />
           <span className={`text-sm ${mode === 'EMULATOR' ? 'font-medium' : 'text-muted-foreground'}`}>
             <i className="fas fa-laptop-code mr-1.5"></i> Emulador
@@ -95,7 +92,13 @@ export function DeviceModeSelector() {
         </div>
       </div>
       
-      <div className="mt-2 text-xs text-muted-foreground">
+      {isLoading && (
+        <div className="text-xs text-center mt-1 text-muted-foreground">
+          <i className="fas fa-circle-notch fa-spin mr-1"></i> Alternando modos...
+        </div>
+      )}
+      
+      <div className="mt-1 text-xs text-muted-foreground">
         {mode === 'NODEMCU' 
           ? 'Usando dados do hardware físico NodeMCU'
           : 'Usando dados simulados do emulador'
