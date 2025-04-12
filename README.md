@@ -206,15 +206,6 @@ O sistema foi projetado considerando aspectos de segurança e escalabilidade:
 - **Testes End-to-End**: Fluxos completos com Cypress
 - **Modo Emulador**: Para desenvolvimento e teste sem hardware
 
-## Integrantes do Projeto
-
-- Edison Cizotto Junior - RA: 2104307 - Polo Socorro
-- Evandro Silva e Sousa - RA: 2105237 - Polo Valinhos
-- Flavio de Morais - RA: 2110349 - Polo Cosmópolis
-- Gustavo Arantes Guidetti - RA: 21100293 - Polo Rio Claro
-- Kleyton Henrique Niza dos Santos - RA: 2008071 - Polo Artur Nogueira
-- Pedro Otávio Sampaio Torres - RA: 2100007 - Polo Cosmópolis
-
 ## Instalação e Execução
 
 1. Instale as dependências:
@@ -260,18 +251,18 @@ Para replicar este processo de deploy:
 1. Crie uma conta no [Render.com](https://render.com/)
 2. Conecte sua conta GitHub ao Render
 3. Crie um novo Web Service no dashboard do Render
-4. Selecione o repositório GitHub: `https://github.com/FlaviodeMorais/PI5_Deploy`
+4. Selecione o repositório GitHub: `https://github.com/user/sample`
 5. Configure as seguintes opções:
-   - **Nome**: Escolha um nome para o serviço (ex: drp04-pji510-pi-v)
+   - **Nome**: Escolha um nome para o serviço (ex: sample)
    - **Runtime**: Node
    - **Build Command**: `npm install && npm run build`
    - **Start Command**: `node dist/index.js`
    - **Variáveis de Ambiente**:
      - `NODE_ENV`: production
      - `PORT`: 10000
-     - `THINGSPEAK_READ_API_KEY`: 5UWNQD21RD2A7QHG
-     - `THINGSPEAK_WRITE_API_KEY`: 9NG6QLIN8UXLE2AH
-     - `THINGSPEAK_CHANNEL_ID`: 2840207
+     - `THINGSPEAK_READ_API_KEY`: informe a Key
+     - `THINGSPEAK_WRITE_API_KEY`: informe a Key
+     - `THINGSPEAK_CHANNEL_ID`: informe o canal
      - `REFRESH_INTERVAL`: 30000
      - `TZ`: America/Sao_Paulo
 
@@ -283,6 +274,6 @@ O deploy no Render.com oferece vantagens como escalonamento automático, SSL gra
 
 ## Credenciais ThingSpeak
 
-- **Canal**: 2840207
-- **Chave de Leitura**: 5UWNQD21RD2A7QHG
-- **Chave de Escrita**: 9NG6QLIN8UXLE2AH
+- **Canal**: 000000
+- **Chave de Leitura**: key
+- **Chave de Escrita**: key
