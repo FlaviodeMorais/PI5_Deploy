@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 
 export function DeviceModeSelector() {
-  const { mode, toggleMode, isEmulatorEnabled, applySystemSettings } = useDeviceMode();
+  const { mode, toggleMode, isEmulatorEnabled } = useDeviceMode();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [emulatorStatus, setEmulatorStatus] = useState<{enabled: boolean}>({enabled: false});
@@ -21,6 +21,13 @@ export function DeviceModeSelector() {
         if (response.ok) {
           const data = await response.json();
           setEmulatorStatus(data);
+          
+          // Verificar se estado do emulador está sincronizado com o modo atual
+          if (data.enabled && mode !== 'EMULATOR') {
+            toggleMode(); // Atualiza o modo para EMULATOR se o emulador estiver ativo
+          } else if (!data.enabled && mode !== 'NODEMCU') {
+            toggleMode(); // Atualiza o modo para NODEMCU se o emulador estiver inativo
+          }
         }
       } catch (error) {
         console.error('Erro ao verificar status do emulador:', error);
@@ -30,14 +37,16 @@ export function DeviceModeSelector() {
     checkEmulatorStatus();
     const interval = setInterval(checkEmulatorStatus, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [mode, toggleMode]);
 
   const handleModeChange = async () => {
+    if (isLoading) return; // Evita múltiplos cliques enquanto está processando
+    
     try {
       setIsLoading(true);
       
       if (mode === 'NODEMCU') {
-        // Estamos mudando para o modo emulador
+        // Mudar para modo emulador
         const response = await fetch('/api/emulator/start', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -52,16 +61,21 @@ export function DeviceModeSelector() {
           throw new Error(`Falha ao iniciar o emulador: ${response.status}`);
         }
         
-        toast({
-          title: "Emulador iniciado",
-          description: "O modo de emulação foi ativado com sucesso."
-        });
-        
-        // Mudar para modo emulador
-        toggleMode();
+        const data = await response.json();
+        if (data.success) {
+          setEmulatorStatus({ enabled: true });
+          toggleMode();
+          
+          toast({
+            title: "Emulador iniciado",
+            description: "O modo de emulação foi ativado com sucesso."
+          });
+        } else {
+          throw new Error(data.message || "Erro ao iniciar emulador");
+        }
       } 
       else {
-        // Estamos mudando para modo NodeMCU
+        // Mudar para modo NodeMCU
         const response = await fetch('/api/emulator/stop', {
           method: 'POST'
         });
@@ -70,13 +84,18 @@ export function DeviceModeSelector() {
           throw new Error(`Falha ao parar o emulador: ${response.status}`);
         }
         
-        toast({
-          title: "Emulador parado",
-          description: "O modo de emulação foi desativado com sucesso."
-        });
-        
-        // Mudar para modo NodeMCU
-        toggleMode();
+        const data = await response.json();
+        if (data.success) {
+          setEmulatorStatus({ enabled: false });
+          toggleMode();
+          
+          toast({
+            title: "Emulador parado",
+            description: "O modo de emulação foi desativado com sucesso."
+          });
+        } else {
+          throw new Error(data.message || "Erro ao parar emulador");
+        }
       }
     } catch (error) {
       console.error('Erro na alternância de modos:', error);
