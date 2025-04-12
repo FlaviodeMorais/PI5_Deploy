@@ -27,12 +27,14 @@ export function Sidebar() {
   const [previousLevel, setPreviousLevel] = useState<number | null>(null);
   
   // Buscar dados para o status do sistema e valores monitorados
-  const { data, isLoading, dataUpdatedAt } = useQuery({
+  const { data, isLoading, dataUpdatedAt, refetch } = useQuery({
     queryKey: ['/api/readings/latest/sidebar'],
     queryFn: () => getLatestReadings(1),
-    refetchInterval: 300000, // Atualizar a cada 5 minutos (300,000ms)
+    refetchInterval: 60000, // Atualizar a cada 1 minuto (60,000ms)
     refetchOnWindowFocus: true,
-    staleTime: 240000, // Considerar os dados obsoletos após 4 minutos
+    staleTime: 30000, // Considerar os dados obsoletos após 30 segundos
+    retry: 3, // Tentar 3 vezes em caso de falha
+    retryDelay: 3000, // Esperar 3 segundos entre as tentativas
   });
 
   // Pegar a leitura mais recente
@@ -90,8 +92,15 @@ export function Sidebar() {
                 </div>
                 <span className={cn("text-xl font-semibold text-white transition-all duration-300", 
                   isUpdating && previousTemp !== latestReading?.temperature && "text-blue-300 animate-pulse font-bold")}>
-                  {formatNumber(latestReading?.temperature || 0)} °C
+                  {latestReading?.temperature && latestReading.temperature > 0 
+                    ? formatNumber(latestReading.temperature) + " °C" 
+                    : isLoading ? "Carregando..." : "Sem dados"}
                 </span>
+                {latestReading?.temperature === 0 && !isLoading && (
+                  <span className="text-xs text-amber-400 ml-1" title="Clique para recarregar" onClick={() => refetch()}>
+                    <i className="fas fa-sync-alt"></i>
+                  </span>
+                )}
               </div>
               
               {/* Nível d'água */}
@@ -101,8 +110,15 @@ export function Sidebar() {
                 </div>
                 <span className={cn("text-xl font-semibold text-white transition-all duration-300", 
                   isUpdating && previousLevel !== latestReading?.level && "text-blue-300 animate-pulse font-bold")}>
-                  {formatNumber(latestReading?.level ? latestReading.level * 100 : 0)} %
+                  {latestReading?.level !== undefined && latestReading.level > 0 
+                    ? formatNumber(latestReading.level * 100) + " %" 
+                    : isLoading ? "Carregando..." : "Sem dados"}
                 </span>
+                {(latestReading?.level === 0 || latestReading?.level === undefined) && !isLoading && (
+                  <span className="text-xs text-amber-400 ml-1" title="Clique para recarregar" onClick={() => refetch()}>
+                    <i className="fas fa-sync-alt"></i>
+                  </span>
+                )}
               </div>
             </div>
           )}

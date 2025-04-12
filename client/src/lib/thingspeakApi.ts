@@ -127,15 +127,86 @@ export async function getLatestReadings(limit = 60): Promise<ReadingsResponse> {
     }
   }
   
-  // Comportamento normal usando a API local
-  const res = await apiRequest("GET", `/api/readings/latest?limit=${limit}&t=${timestamp}`, undefined, {
-    headers: {
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0'
+  try {
+    // Comportamento normal usando a API local
+    const res = await apiRequest("GET", `/api/readings/latest?limit=${limit}&t=${timestamp}`, undefined, {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    });
+    
+    if (!res.ok) {
+      throw new Error(`Erro ao buscar leituras: ${res.statusText}`);
     }
-  });
-  return res.json();
+    
+    const data = await res.json();
+    
+    // Verificar se temos leituras válidas
+    if (!data.readings || data.readings.length === 0) {
+      console.warn('Nenhuma leitura encontrada, tentando buscar do ThingSpeak diretamente');
+      // Tentar buscar diretamente do ThingSpeak como fallback
+      return await fetchThingspeakReadingsFallback();
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Erro ao buscar leituras da API local:', error);
+    // Tentar ThingSpeak como fallback
+    return await fetchThingspeakReadingsFallback();
+  }
+}
+
+// Função auxiliar para buscar dados diretamente do ThingSpeak como fallback
+async function fetchThingspeakReadingsFallback(): Promise<ReadingsResponse> {
+  try {
+    const channelId = getThingspeakChannelId();
+    const readApiKey = getThingspeakReadApiKey();
+    const url = `${getThingspeakBaseUrl()}/channels/${channelId}/feeds/last.json?api_key=${readApiKey}`;
+    
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Erro ao buscar do ThingSpeak: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    
+    // Verificar se temos dados válidos
+    if (!data || !data.created_at) {
+      throw new Error('Dados inválidos do ThingSpeak');
+    }
+    
+    // Extrair valores
+    const temperature = parseFloat(data.field1) || 0;
+    const level = parseFloat(data.field2) || 0;
+    const pumpStatus = data.field3 === '1' || data.field3 === 1;
+    const heaterStatus = data.field4 === '1' || data.field4 === 1;
+    
+    return {
+      readings: [{
+        id: 1,
+        temperature,
+        level,
+        pumpStatus,
+        heaterStatus,
+        timestamp: new Date(data.created_at).getTime()
+      }],
+      setpoints: {
+        temp: { min: 25, max: 30 },
+        level: { min: 40, max: 80 }
+      }
+    };
+  } catch (error) {
+    console.error('Erro no fallback do ThingSpeak:', error);
+    return {
+      readings: [],
+      setpoints: {
+        temp: { min: 25, max: 30 },
+        level: { min: 40, max: 80 }
+      }
+    };
+  }
 }
 
 // Get historical readings from database or ThingSpeak
