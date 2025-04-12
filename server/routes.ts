@@ -26,7 +26,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Calcular o intervalo em segundos para o cron a partir do REFRESH_INTERVAL em ms
   const intervalInSeconds = Math.max(Math.floor(REFRESH_INTERVAL / 1000), 2);
   console.log(`Configurando coleta de dados a cada ${intervalInSeconds} segundos (${REFRESH_INTERVAL}ms)`);
-  
+
   cron.schedule(`*/${intervalInSeconds} * * * * *`, async () => {
     try {
       console.log('Starting scheduled data collection...');
@@ -62,14 +62,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   // API Routes
-  
+
   // Get latest readings
   app.get('/api/readings/latest', async (req, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 60;
       const readings = await storage.getLatestReadings(limit);
       const setpoints = await storage.getSetpoints();
-      
+
       res.json({
         readings,
         setpoints: {
@@ -88,16 +88,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: 'Failed to fetch latest readings' });
     }
   });
-  
+
   // Endpoint específico para verificar o status atual dos dispositivos
   app.get('/api/device/status', async (req, res) => {
     try {
       // Obter o estado atual em memória (atualizações mais recentes)
       const inMemoryStatus = getCurrentDeviceStatus();
-      
+
       // Buscar também a leitura mais recente do banco de dados
       const latestReadings = await storage.getLatestReadings(1);
-      
+
       // Verificar se há dados no banco
       if (!latestReadings || latestReadings.length === 0) {
         // Se não há dados no banco, retornar apenas o status em memória com aviso
@@ -112,21 +112,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           databaseState: null
         });
       }
-      
+
       // Se temos dados do banco, mostrar ambas as fontes
       const latest = latestReadings[0];
       console.log('Detalhes da última leitura do banco:', JSON.stringify(latest));
       console.log('Status atual em memória:', JSON.stringify(inMemoryStatus));
-      
+
       // Verificar se os estados são diferentes entre a memória e o banco de dados
       const memoryPumpStatus = inMemoryStatus.pumpStatus;
       const memoryHeaterStatus = inMemoryStatus.heaterStatus;
       const dbPumpStatus = latest.pumpStatus;
       const dbHeaterStatus = latest.heaterStatus;
-      
+
       // Se os estados forem diferentes, considera que há sincronização pendente
       const pendingSync = (memoryPumpStatus !== dbPumpStatus) || (memoryHeaterStatus !== dbHeaterStatus);
-      
+
       // Preferimos o valor do banco se ele for mais recente que a memória (indicando que o ThingSpeak já confirmou)
       // Caso contrário, informamos ambos os valores e deixamos o cliente decidir o que exibir
       const databaseState = {
@@ -134,13 +134,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         pumpStatus: latest.pumpStatus,
         heaterStatus: latest.heaterStatus
       };
-      
+
       const memoryState = {
         timestamp: inMemoryStatus.lastUpdate,
         pumpStatus: inMemoryStatus.pumpStatus,
         heaterStatus: inMemoryStatus.heaterStatus
       };
-      
+
       // Transparentemente enviar ambos os estados
       res.json({
         timestamp: latest.timestamp,
@@ -161,27 +161,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/readings/history', async (req, res) => {
     try {
       const { startDate, endDate } = req.query;
-      
+
       if (!startDate || !endDate) {
         return res.status(400).json({ error: 'Start and end dates are required' });
       }
-      
+
       console.log(`Fetching readings from ${startDate} to ${endDate} from local database...`);
-      
+
       // Limitar o número máximo de leituras retornadas para evitar sobrecarga
       const MAX_READINGS = 1000;
-      
+
       // A função de agregação já está importada no topo do arquivo
-      
+
       // Calcular a diferença em dias para diagnóstico
       const start = new Date(startDate as string);
       const end = new Date(endDate as string);
       const diffTime = Math.abs(end.getTime() - start.getTime());
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
-      
+
       console.log(`SQL Query: Buscando leituras entre ${startDate} e ${endDate} (max: ${MAX_READINGS})`);
       console.log(`Data inicial: ${start.toLocaleDateString()}, Data final ajustada: ${new Date(end.getTime() + 86400000).toLocaleDateString()}`);
-      
+
       // Agora tentar buscar os dados do banco local
       let readings: Reading[] = [];
       try {
@@ -191,19 +191,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Erro ao buscar dados do banco:", dbError);
         readings = [];
       }
-      
+
       // Se mesmo após a importação ainda não temos dados, usar o ThingSpeak diretamente
       if (readings.length === 0) {
         console.log('Nenhum dado encontrado no banco após importação. Buscando do ThingSpeak diretamente...');
-        
+
         try {
           // Buscar diretamente do ThingSpeak
           console.log(`Fetching ${diffDays} days of data directly from ThingSpeak with timeout...`);
           const thingspeakReadings = await fetchHistoricalReadings(diffDays);
-          
+
           if (thingspeakReadings && thingspeakReadings.length > 0) {
             console.log(`Obtidas ${thingspeakReadings.length} leituras diretamente do ThingSpeak.`);
-            
+
             // Converter para o formato esperado - adicionar IDs para compatibilidade
             readings = thingspeakReadings.map((r, index) => ({
               ...r,
@@ -217,7 +217,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error("Erro ao buscar diretamente do ThingSpeak:", thingspeakError);
         }
       }
-      
+
       // Se ainda não temos dados, retorne erro
       if (!readings || readings.length === 0) {
         console.log('Nenhum dado disponível após todas as tentativas.');
@@ -226,14 +226,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: 'Não há dados disponíveis para o período selecionado. Por favor, tente outro período.'
         });
       }
-      
+
       // Aplicar a agregação com base no período selecionado
       const aggregatedReadings = aggregateReadingsByDateRange(readings, start, end);
-      
+
       const setpoints = await storage.getSetpoints();
       const tempStats = storage.getTemperatureStats(readings); // Usamos os dados originais para estatísticas precisas
       const levelStats = storage.getLevelStats(readings);
-      
+
       res.json({
         readings: aggregatedReadings, // Enviamos os dados agregados
         setpoints: {
@@ -256,19 +256,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: 'Failed to fetch readings history' });
     }
   });
-  
+
   // Get readings directly from ThingSpeak
   app.get('/api/thingspeak/history', async (req, res) => {
     try {
       const days = parseInt(req.query.days as string) || 7;
-      
+
       console.log(`Fetching ${days} days of data directly from ThingSpeak...`);
       const readings = await fetchHistoricalReadings(days);
-      
+
       if (readings.length === 0) {
         return res.status(404).json({ error: 'No data found from ThingSpeak' });
       }
-      
+
       // Save readings to database if they don't already exist
       for (const reading of readings) {
         try {
@@ -277,9 +277,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log('Reading might already exist in DB, skipping');
         }
       }
-      
+
       const setpoints = await storage.getSetpoints();
-      
+
       // Convert the readings to the format expected by the stats functions
       // This is a temporary fix for the type error
       const readingsWithId = readings.map(r => ({
@@ -289,10 +289,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         heaterStatus: r.heaterStatus || false,
         timestamp: r.timestamp || new Date(),
       }));
-      
+
       const tempStats = storage.getTemperatureStats(readingsWithId);
       const levelStats = storage.getLevelStats(readingsWithId);
-      
+
       res.json({
         readings,
         setpoints: {
@@ -320,11 +320,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/setpoints', async (req, res) => {
     try {
       const result = insertSetpointSchema.safeParse(req.body);
-      
+
       if (!result.success) {
         return res.status(400).json({ error: 'Invalid setpoint data', details: result.error });
       }
-      
+
       const updatedSetpoints = await storage.updateSetpoints(result.data);
       res.json(updatedSetpoints);
     } catch (error) {
@@ -348,11 +348,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/settings', async (req, res) => {
     try {
       const result = insertSettingsSchema.safeParse(req.body);
-      
+
       if (!result.success) {
         return res.status(400).json({ error: 'Invalid settings data', details: result.error });
       }
-      
+
       const updatedSettings = await storage.updateSettings(result.data);
       res.json(updatedSettings);
     } catch (error) {
@@ -360,7 +360,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: 'Failed to update settings' });
     }
   });
-  
+
   // Get system uptime (first reading date)
   app.get('/api/system/uptime', async (req, res) => {
     try {
@@ -393,21 +393,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const schema = z.object({
         status: z.boolean()
       });
-      
+
       const result = schema.safeParse(req.body);
-      
+
       if (!result.success) {
         return res.status(400).json({ error: 'Invalid pump control data' });
       }
-      
+
       // Responder imediatamente para fornecer feedback rápido na interface
       res.json({ success: true, pumpStatus: result.data.status });
-      
+
       // Processar atualização em segundo plano sem bloquear a resposta
       try {
         // Update ThingSpeak - usando o método individual da bomba
         const updateResult = await updatePumpStatus(result.data.status);
-        
+
         if (updateResult) {
           console.log('✅ Bomba atualizada com sucesso no ThingSpeak:', result.data.status ? 'LIGADA' : 'DESLIGADA');
         } else {
@@ -428,21 +428,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const schema = z.object({
         status: z.boolean()
       });
-      
+
       const result = schema.safeParse(req.body);
-      
+
       if (!result.success) {
         return res.status(400).json({ error: 'Invalid heater control data' });
       }
-      
+
       // Responder imediatamente para fornecer feedback rápido na interface
       res.json({ success: true, heaterStatus: result.data.status });
-      
+
       // Processar atualização em segundo plano sem bloquear a resposta
       try {
         // Update ThingSpeak - usando o método individual do aquecedor
         const updateResult = await updateHeaterStatus(result.data.status);
-        
+
         if (updateResult) {
           console.log('✅ Aquecedor atualizado com sucesso no ThingSpeak:', result.data.status ? 'LIGADO' : 'DESLIGADO');
         } else {
@@ -473,6 +473,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Rota para executar diagnóstico do sistema
+  app.get('/api/diagnostic', async (req, res) => {
+    try {
+      const { runDiagnostics } = await import('./services/diagnosticService');
+      const result = await runDiagnostics();
+      res.json({ 
+        success: true,
+        timestamp: new Date(),
+        diagnosticResult: result
+      });
+    } catch (error) {
+      console.error('Error running diagnostics:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Falha ao executar diagnóstico',
+        details: error instanceof Error ? error.message : 'Erro desconhecido' 
+      });
+    }
+  });
+
   // Rota para obter informações sobre o backup
   app.get('/api/backup/status', async (req, res) => {
     try {
@@ -480,10 +500,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!backupService.isInitialized) {
         await backupService.initialize();
       }
-      
+
       // Obter o último ID sincronizado
       const lastBackupInfo = await backupService.getLastBackupInfo();
-      
+
       res.json({ 
         success: true,
         status: 'online',
@@ -502,14 +522,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  
+
   // Rota para obter estatísticas do backup
   app.get('/api/backup/stats', async (req, res) => {
     try {
       if (!backupService.isInitialized) {
         await backupService.initialize();
       }
-      
+
       const stats = await backupService.getBackupStats();
       res.json({ 
         success: true,
@@ -524,14 +544,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  
+
   // Rota para obter informações de uptime do sistema
   app.get('/api/system/uptime', async (req, res) => {
     try {
       // Buscar a primeira (mais antiga) leitura no banco
       const readings = await storage.getFirstReading();
       const firstTimestamp = readings?.timestamp || new Date().toISOString();
-      
+
       res.json({ 
         success: true, 
         firstReadingDate: firstTimestamp
@@ -550,9 +570,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/sync/thingspeak-to-db', async (req, res) => {
     try {
       const days = parseInt(req.query.days as string || req.body.days as string) || 7;
-      
+
       console.log(`🔄 Importando ${days} dias de dados do ThingSpeak para o banco de dados local...`);
-      
+
       // Evitando bloqueio do banco de dados durante longos processos assíncronos
       // Programamos o processo para ser executado em background
       setTimeout(async () => {
@@ -563,7 +583,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error('❌ Erro durante importação em background:', syncError);
         }
       }, 100);
-      
+
       // Retorna imediatamente para evitar timeout do cliente
       res.json({ 
         success: true, 

@@ -19,23 +19,28 @@ export function EquipmentControls({
   const [isHeaterLoading, setIsHeaterLoading] = useState(false);
   const [pumpStatus, setPumpStatus] = useState(false);
   const [isPumpLoading, setIsPumpLoading] = useState(false);
+  const [deviceStatus, setDeviceStatus] = useState(null); // Added state for device status
+  const [localPumpStatus, setLocalPumpStatus] = useState(false); // Added local pump status
+  const [localHeaterStatus, setLocalHeaterStatus] = useState(false); // Added local heater status
+
 
   const checkActualStatus = async () => {
     try {
       // Verificar o status real dos dispositivos
-      const deviceStatus = await getDeviceStatus();
-      console.log('Status atual dos dispositivos:', deviceStatus);
+      const deviceStatusData = await getDeviceStatus();
+      setDeviceStatus(deviceStatusData); // Update deviceStatus state
+      console.log('Status atual dos dispositivos:', deviceStatusData);
 
-      // Atualizar estado local se diferente do status real
-      if (deviceStatus.pumpStatus !== pumpStatus) {
-        console.log(`Atualizando status da bomba na UI: ${pumpStatus} → ${deviceStatus.pumpStatus}`);
-        setPumpStatus(deviceStatus.pumpStatus);
-      }
+      // Atualizar estado local se diferente do status real - removed as this is now handled in useEffect
+      // if (deviceStatus.pumpStatus !== pumpStatus) {
+      //   console.log(`Atualizando status da bomba na UI: ${pumpStatus} → ${deviceStatus.pumpStatus}`);
+      //   setPumpStatus(deviceStatus.pumpStatus);
+      // }
 
-      if (deviceStatus.heaterStatus !== heaterStatus) {
-        console.log(`Atualizando status do aquecedor na UI: ${heaterStatus} → ${deviceStatus.heaterStatus}`);
-        setHeaterStatus(deviceStatus.heaterStatus);
-      }
+      // if (deviceStatus.heaterStatus !== heaterStatus) {
+      //   console.log(`Atualizando status do aquecedor na UI: ${heaterStatus} → ${deviceStatus.heaterStatus}`);
+      //   setHeaterStatus(deviceStatus.heaterStatus);
+      // }
     } catch (error) {
       console.error('Erro ao verificar status atual dos dispositivos:', error);
     }
@@ -155,6 +160,41 @@ export function EquipmentControls({
     const interval = setInterval(checkActualStatus, 5000);
     return () => clearInterval(interval);
   }, []);
+
+  // Update pump status when API data changes with safe checks
+  useEffect(() => {
+    if (deviceStatus) {
+      // Usar a fonte de dados mais confiável
+      // Primeira opção: valor do banco de dados (mais confiável)
+      // Segunda opção: valor da memória (mais recente, mas pode estar pendente)
+      if (deviceStatus.source === 'database' && deviceStatus.databaseState) {
+        // Priorizar o valor do banco se disponível
+        const dbPumpStatus = typeof deviceStatus.pumpStatus === 'boolean' ? deviceStatus.pumpStatus : false;
+        const dbHeaterStatus = typeof deviceStatus.heaterStatus === 'boolean' ? deviceStatus.heaterStatus : false;
+
+        console.log("Atualizando status da bomba na UI:", localPumpStatus, "→", dbPumpStatus);
+        console.log("Atualizando status do aquecedor na UI:", localHeaterStatus, "→", dbHeaterStatus);
+
+        setLocalPumpStatus(dbPumpStatus);
+        setLocalHeaterStatus(dbHeaterStatus);
+        setPumpStatus(dbPumpStatus);
+        setHeaterStatus(dbHeaterStatus);
+      } 
+      // Se o estado do banco não estiver disponível, usar memória
+      else if (deviceStatus.memoryState) {
+        const memPumpStatus = typeof deviceStatus.memoryState.pumpStatus === 'boolean' ? deviceStatus.memoryState.pumpStatus : false;
+        const memHeaterStatus = typeof deviceStatus.memoryState.heaterStatus === 'boolean' ? deviceStatus.memoryState.heaterStatus : false;
+
+        console.log("Atualizando status da bomba na UI (memória):", localPumpStatus, "→", memPumpStatus);
+        console.log("Atualizando status do aquecedor na UI (memória):", localHeaterStatus, "→", memHeaterStatus);
+
+        setLocalPumpStatus(memPumpStatus);
+        setLocalHeaterStatus(memHeaterStatus);
+        setPumpStatus(memPumpStatus);
+        setHeaterStatus(memHeaterStatus);
+      }
+    }
+  }, [deviceStatus]);
 
   return (
     <div className="mb-8 px-6">

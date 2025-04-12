@@ -61,22 +61,24 @@ export function DeviceControl({
       const newStatus = data[statusKey as keyof DeviceResponse] as boolean || false;
       setIsOn(newStatus);
       setStatusText(getStatusText(newStatus));
-      
+
       // Registrar hora da atualização
       setLastUpdate(formatTime(new Date()));
-      
+
       // Invalidação da query para atualizar o cache
       queryClient.invalidateQueries({ queryKey: ['/api/readings/latest'] });
     },
   });
 
-  // Update UI based on latest reading
+  // Update UI based on latest reading  - with safety check for undefined values.
   useEffect(() => {
     if (latestReading && !toggleMutation.isPending) {
       const currentStatus = getStatus(latestReading);
-      setIsOn(currentStatus);
-      setStatusText(getStatusText(currentStatus));
-      
+      if(currentStatus !== undefined && currentStatus !== null){
+        setIsOn(currentStatus);
+        setStatusText(getStatusText(currentStatus));
+      }
+
       // Atualizar timestamp da última leitura
       if (latestReading.timestamp) {
         setLastUpdate(formatTime(new Date(latestReading.timestamp)));
@@ -89,13 +91,13 @@ export function DeviceControl({
     if (mode === 'auto' && latestReading) {
       let shouldBeOn = false;
       let reasonText = '';
-      
+
       // Obter setpoints da API (presentes na mesma resposta que os readings)
       const minTemp = latestReading.tempMin ?? 25;
       const maxTemp = latestReading.tempMax ?? 30;
       const minLevel = latestReading.levelMin ?? 20;
       const maxLevel = latestReading.levelMax ?? 80;
-      
+
       if (type === 'heater') {
         // Lógica para aquecedor: ligar se temperatura abaixo do mínimo
         if (latestReading.temperature < minTemp && 
@@ -119,9 +121,9 @@ export function DeviceControl({
           reasonText = `Nível ${latestReading.level.toFixed(1)}% OK`;
         }
       }
-      
+
       setAutoModeStatus(reasonText);
-      
+
       // Atualizar dispositivo se o status for diferente do atual
       if (shouldBeOn !== isOn && !toggleMutation.isPending && 
           latestReading.temperature !== SENSOR_ERROR_VALUE) {
@@ -132,7 +134,7 @@ export function DeviceControl({
 
   const handleModeChange = (newMode: string) => {
     setMode(newMode);
-    
+
     // Ao mudar para modo manual, mantenha o estado atual
     // Ao mudar para modo automático, o efeito acima vai cuidar da lógica
   };
@@ -149,7 +151,7 @@ export function DeviceControl({
     <div className="bg-gradient-to-br from-gray-900 to-black border border-gray-800 rounded-lg shadow-xl p-5 relative overflow-hidden min-h-[200px] flex flex-col">
       {/* Status indicator - absolute positioned mini dot */}
       <div className={`absolute right-4 top-4 w-2 h-2 rounded-full ${isOn ? `${activeTextClass} animate-pulse` : 'bg-gray-500'}`}></div>
-      
+
       {/* Device icon and info - modernized header */}
       <div className="flex items-center mb-3 relative">
         <div className={`w-10 h-10 rounded-lg ${isOn ? iconBackgroundClass : 'bg-gray-800'} flex items-center justify-center text-lg transition-all duration-300 mr-3`}>
@@ -167,14 +169,14 @@ export function DeviceControl({
           </Badge>
         )}
       </div>
-      
+
       {/* Auto mode status - elegant information display */}
       {mode === 'auto' && autoModeStatus && (
         <div className="bg-gray-800/50 text-xs text-white/60 p-2 rounded mb-3 border border-gray-700/50">
           <i className="fas fa-robot mr-1"></i> {autoModeStatus}
         </div>
       )}
-      
+
       <div className="mt-auto">
         {/* Mode toggle - minimalist pill */}
         <div className="flex w-full rounded-full bg-gray-800/50 mb-4 p-1 h-8">
@@ -191,7 +193,7 @@ export function DeviceControl({
             <i className="fas fa-robot mr-1"></i> Auto
           </button>
         </div>
-        
+
         {/* Power button - minimalist design, high contrast */}
         <button
           className={`w-full p-2 rounded-lg flex items-center justify-center transition-all ${isOn 
@@ -210,7 +212,7 @@ export function DeviceControl({
             </span>
           </div>
         </button>
-        
+
         {toggleMutation.isPending && (
           <div className="text-xs text-center mt-2 text-gray-400">
             <i className="fas fa-circle-notch fa-spin mr-1"></i> Atualizando...
