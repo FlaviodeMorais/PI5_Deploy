@@ -6,7 +6,6 @@ import { SystemStatus } from '@/components/dashboard/SystemStatus';
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatNumber } from '@/lib/utils';
 import { useState, useEffect } from 'react';
-import { DeviceModeSelector } from '@/components/dashboard/DeviceModeSelector';
 
 const navItems = [
   {
@@ -153,11 +152,7 @@ export function Sidebar() {
           ))}
         </nav>
 
-        {/* Seletor de Modo NodeMCU/Emulador */}
-        <div className="px-2 pb-2 mt-4 border-t border-white/5 pt-4">
-            <DeviceModeSelector />
-        </div>
-        <hr className="divider" />
+        
 
       </div>
     </div>

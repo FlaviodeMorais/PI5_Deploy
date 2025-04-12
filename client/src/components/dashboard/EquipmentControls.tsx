@@ -58,7 +58,7 @@ export function EquipmentControls({
       // Envia atualização para API com timestamp para evitar cache
       const timestamp = new Date().getTime();
       console.log(`Enviando atualização para API com timestamp ${timestamp}...`);
-      const result = await updateHeaterStatus(newStatus); //This line uses the existing API call, assuming it now correctly targets the device.
+      const result = await updateHeaterStatus(newStatus); 
 
       console.log('Resposta da API para alteração do aquecedor:', result);
 
@@ -69,7 +69,7 @@ export function EquipmentControls({
         toast({
           variant: "destructive",
           title: "Erro",
-          description: "Não foi possível atualizar o status do aquecedor"
+          description: "Não foi possível atualizar o status do aquecedor. Tente novamente."
         });
       } else {
         toast({
@@ -84,10 +84,12 @@ export function EquipmentControls({
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Falha na comunicação com o servidor"
+        description: "Falha na comunicação com o servidor. Tente novamente."
       });
     } finally {
-      setIsHeaterLoading(false);
+      setTimeout(() => {
+        setIsHeaterLoading(false);
+      }, 1000);
       // Verificar status real após um segundo
       setTimeout(checkActualStatus, 1000);
     }
@@ -110,7 +112,7 @@ export function EquipmentControls({
       // Envia atualização para API com timestamp para evitar cache
       const timestamp = new Date().getTime();
       console.log(`Enviando atualização para API com timestamp ${timestamp}...`);
-      const result = await updatePumpStatus(newStatus); //This line uses the existing API call, assuming it now correctly targets the device.
+      const result = await updatePumpStatus(newStatus); 
 
       console.log('Resposta da API para alteração da bomba:', result);
 
@@ -121,7 +123,7 @@ export function EquipmentControls({
         toast({
           variant: "destructive",
           title: "Erro",
-          description: "Não foi possível atualizar o status da bomba"
+          description: "Não foi possível atualizar o status da bomba. Tente novamente."
         });
       } else {
         toast({
@@ -136,10 +138,12 @@ export function EquipmentControls({
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Falha na comunicação com o servidor"
+        description: "Falha na comunicação com o servidor. Tente novamente."
       });
     } finally {
-      setIsPumpLoading(false);
+      setTimeout(() => {
+        setIsPumpLoading(false);
+      }, 1000);
       // Verificar status real após um segundo
       setTimeout(checkActualStatus, 1000);
     }
