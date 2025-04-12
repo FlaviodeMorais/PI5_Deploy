@@ -66,6 +66,15 @@ args = "git commit -m \"Sincronização automática a partir do Replit\""
 task = "shell.exec"
 args = "git push -u origin main"
 
+[[workflows.workflow]]
+name = "Testar Deploy"
+author = 40607213
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "bash deploy.sh"
+
 [[ports]]
 localPort = 5000
 externalPort = 80
