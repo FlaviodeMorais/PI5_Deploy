@@ -507,15 +507,15 @@ var init_storage = __esm({
           }
           const countResult = await this.db.get("SELECT COUNT(*) as count FROM readings");
           console.log(`Total de leituras no banco: ${countResult ? countResult.count : 0}`);
-          const readings2 = await this.db.all(
+          const readings3 = await this.db.all(
             `SELECT * FROM readings 
          WHERE datetime(timestamp) >= datetime(?) AND datetime(timestamp) <= datetime(?) 
          ORDER BY timestamp ASC
          LIMIT ?`,
             [startDate + "T00:00:00.000Z", adjustedEndDateString + "T23:59:59.999Z", maxResults]
           );
-          console.log(`Encontradas ${readings2.length} leituras no banco de dados para o per\xEDodo especificado.`);
-          const formattedReadings = readings2.map((reading) => ({
+          console.log(`Encontradas ${readings3.length} leituras no banco de dados para o per\xEDodo especificado.`);
+          const formattedReadings = readings3.map((reading) => ({
             ...reading,
             pumpStatus: reading.pump_status === 1,
             heaterStatus: reading.heater_status === 1,
@@ -718,11 +718,11 @@ var init_storage = __esm({
       toSnakeCase(str) {
         return str.replace(/([A-Z])/g, "_$1").toLowerCase();
       }
-      getTemperatureStats(readings2) {
-        if (readings2.length === 0) {
+      getTemperatureStats(readings3) {
+        if (readings3.length === 0) {
           return { avg: 0, min: 0, max: 0, stdDev: 0 };
         }
-        const temperatures = readings2.map((r) => r.temperature);
+        const temperatures = readings3.map((r) => r.temperature);
         const avg = temperatures.reduce((sum, t) => sum + t, 0) / temperatures.length;
         const min = Math.min(...temperatures);
         const max = Math.max(...temperatures);
@@ -731,11 +731,11 @@ var init_storage = __esm({
         const stdDev = Math.sqrt(avgSquareDiff);
         return { avg, min, max, stdDev };
       }
-      getLevelStats(readings2) {
-        if (readings2.length === 0) {
+      getLevelStats(readings3) {
+        if (readings3.length === 0) {
           return { avg: 0, min: 0, max: 0, stdDev: 0 };
         }
-        const levels = readings2.map((r) => r.level);
+        const levels = readings3.map((r) => r.level);
         const avg = levels.reduce((sum, l) => sum + l, 0) / levels.length;
         const min = Math.min(...levels);
         const max = Math.max(...levels);
@@ -778,8 +778,8 @@ async function runDiagnostics() {
 }
 async function checkDatabaseConnection() {
   try {
-    const readings2 = await storage.getLatestReadings(1);
-    const status = readings2 && readings2.length > 0;
+    const readings3 = await storage.getLatestReadings(1);
+    const status = readings3 && readings3.length > 0;
     addDiagnosticRecord(
       "db_connection",
       status ? "Conex\xE3o com banco de dados OK" : "Falha na conex\xE3o com banco de dados",
@@ -794,14 +794,14 @@ async function checkDatabaseConnection() {
 async function checkDeviceStateConsistency() {
   try {
     const memoryState = getCurrentDeviceStatus();
-    const readings2 = await storage.getLatestReadings(1);
-    if (!readings2 || readings2.length === 0) {
+    const readings3 = await storage.getLatestReadings(1);
+    if (!readings3 || readings3.length === 0) {
       addDiagnosticRecord("device_consistency", "Sem leituras no banco para comparar", false);
       return { success: false, details: "No database readings" };
     }
     const dbState = {
-      pumpStatus: Boolean(readings2[0].pump_status),
-      heaterStatus: Boolean(readings2[0].heater_status)
+      pumpStatus: Boolean(readings3[0].pump_status),
+      heaterStatus: Boolean(readings3[0].heater_status)
     };
     const isPumpConsistent = memoryState.pumpStatus === dbState.pumpStatus;
     const isHeaterConsistent = memoryState.heaterStatus === dbState.heaterStatus;
@@ -1023,16 +1023,16 @@ async function syncThingspeakToDatabase(days = 7) {
         await storage.ensureInitialized();
       }
     }
-    const readings2 = await fetchHistoricalReadings(days);
-    if (readings2.length === 0) {
+    const readings3 = await fetchHistoricalReadings(days);
+    if (readings3.length === 0) {
       log("\u26A0\uFE0F Nenhum dado encontrado no ThingSpeak para o per\xEDodo solicitado", "sync");
       return 0;
     }
-    log(`\u{1F4CA} Encontradas ${readings2.length} leituras no ThingSpeak`, "sync");
+    log(`\u{1F4CA} Encontradas ${readings3.length} leituras no ThingSpeak`, "sync");
     let importedCount = 0;
     let skipCount = 0;
     let errorCount = 0;
-    for (const reading of readings2) {
+    for (const reading of readings3) {
       try {
         const readingToSave = {
           temperature: reading.temperature,
@@ -1044,7 +1044,7 @@ async function syncThingspeakToDatabase(days = 7) {
         await storage.saveReading(readingToSave);
         importedCount++;
         if (importedCount % 100 === 0) {
-          log(`\u{1F4E5} Importados ${importedCount}/${readings2.length} registros...`, "sync");
+          log(`\u{1F4E5} Importados ${importedCount}/${readings3.length} registros...`, "sync");
         }
       } catch (error) {
         if (error instanceof Error && error.message.includes("UNIQUE constraint failed")) {
@@ -1554,7 +1554,7 @@ var backupService = new BackupService();
 // shared/schema.ts
 import { pgTable, text, serial, integer, boolean, real, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
-var readings = pgTable("readings", {
+var readings2 = pgTable("readings", {
   id: serial("id").primaryKey(),
   temperature: real("temperature").notNull(),
   level: real("level").notNull(),
@@ -1562,7 +1562,7 @@ var readings = pgTable("readings", {
   heaterStatus: boolean("heater_status").default(false).notNull(),
   timestamp: timestamp("timestamp").defaultNow().notNull()
 });
-var insertReadingSchema = createInsertSchema(readings).omit({
+var insertReadingSchema = createInsertSchema(readings2).omit({
   id: true
 });
 var setpoints = pgTable("setpoints", {
@@ -1593,6 +1593,9 @@ var settings = pgTable("settings", {
   levelWarningMin: integer("level_warning_min").default(60).notNull(),
   levelWarningMax: integer("level_warning_max").default(85).notNull(),
   levelCriticalMax: integer("level_critical_max").default(90).notNull(),
+  chartType: text("chart_type").default("classic").notNull(),
+  darkMode: boolean("dark_mode").default(false).notNull(),
+  use24HourTime: boolean("use_24_hour_time").default(true).notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull()
 });
 var insertSettingsSchema = createInsertSchema(settings).omit({
@@ -1605,10 +1608,10 @@ import { z } from "zod";
 
 // server/utils/dataAggregation.ts
 var SENSOR_ERROR_VALUE = -127;
-function aggregateByMinute(readings2) {
-  if (!readings2 || readings2.length === 0) return [];
+function aggregateByMinute(readings3) {
+  if (!readings3 || readings3.length === 0) return [];
   const minuteGroups = {};
-  readings2.forEach((reading) => {
+  readings3.forEach((reading) => {
     const date = new Date(reading.timestamp);
     const minuteKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}-${date.getHours()}-${date.getMinutes()}`;
     if (!minuteGroups[minuteKey]) {
@@ -1648,13 +1651,13 @@ function aggregateByMinute(readings2) {
     heaterStatus: group.heaterStatus,
     timestamp: group.timestamp
   })).sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
-  console.log(`Agregados ${readings2.length} registros em ${aggregatedReadings.length} m\xE9dias por minuto`);
+  console.log(`Agregados ${readings3.length} registros em ${aggregatedReadings.length} m\xE9dias por minuto`);
   return aggregatedReadings;
 }
-function aggregateByHour(readings2) {
-  if (!readings2 || readings2.length === 0) return [];
+function aggregateByHour(readings3) {
+  if (!readings3 || readings3.length === 0) return [];
   const hourlyGroups = {};
-  readings2.forEach((reading) => {
+  readings3.forEach((reading) => {
     const date = new Date(reading.timestamp);
     const hourKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}-${date.getHours()}`;
     if (!hourlyGroups[hourKey]) {
@@ -1694,13 +1697,13 @@ function aggregateByHour(readings2) {
     heaterStatus: group.heaterStatus,
     timestamp: group.timestamp
   })).sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
-  console.log(`Agregados ${readings2.length} registros em ${aggregatedReadings.length} m\xE9dias hor\xE1rias`);
+  console.log(`Agregados ${readings3.length} registros em ${aggregatedReadings.length} m\xE9dias hor\xE1rias`);
   return aggregatedReadings;
 }
-function aggregateByWeek(readings2) {
-  if (!readings2 || readings2.length === 0) return [];
+function aggregateByWeek(readings3) {
+  if (!readings3 || readings3.length === 0) return [];
   const weeklyGroups = {};
-  readings2.forEach((reading) => {
+  readings3.forEach((reading) => {
     const date = new Date(reading.timestamp);
     const startOfWeek = new Date(date);
     startOfWeek.setDate(date.getDate() - date.getDay());
@@ -1743,27 +1746,30 @@ function aggregateByWeek(readings2) {
     heaterStatus: group.heaterStatus,
     timestamp: group.timestamp
   })).sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
-  console.log(`Agregados ${readings2.length} registros em ${aggregatedReadings.length} m\xE9dias semanais`);
+  console.log(`Agregados ${readings3.length} registros em ${aggregatedReadings.length} m\xE9dias semanais`);
   return aggregatedReadings;
 }
-function aggregateReadingsByDateRange(readings2, startDate, endDate) {
-  if (!readings2 || readings2.length === 0) return [];
+function aggregateReadingsByDateRange(readings3, startDate, endDate) {
+  if (!readings3 || readings3.length === 0) return [];
   const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
   const diffDays = Math.ceil(diffTime / (1e3 * 60 * 60 * 24));
   const diffHours = Math.ceil(diffTime / (1e3 * 60 * 60));
   console.log(`Per\xEDodo de consulta: ${diffDays} dias (${diffHours} horas)`);
   if (diffDays <= 1) {
-    return aggregateByMinute(readings2);
+    return aggregateByMinute(readings3);
   } else if (diffDays < 7) {
-    return aggregateByHour(readings2);
+    return aggregateByHour(readings3);
   } else {
-    return aggregateByWeek(readings2);
+    return aggregateByWeek(readings3);
   }
 }
 
 // server/routes.ts
-async function registerRoutes(app2) {
+async function registerRoutes(app2, apiRouter2) {
   const httpServer = createServer(app2);
+  apiRouter2.get("/health", (req, res) => {
+    res.status(200).json({ status: "ok", environment: process.env.NODE_ENV });
+  });
   const intervalInSeconds = Math.max(Math.floor(REFRESH_INTERVAL / 1e3), 2);
   console.log(`Configurando coleta de dados a cada ${intervalInSeconds} segundos (${REFRESH_INTERVAL}ms)`);
   cron.schedule(`*/${intervalInSeconds} * * * * *`, async () => {
@@ -1798,10 +1804,10 @@ async function registerRoutes(app2) {
   app2.get("/api/readings/latest", async (req, res) => {
     try {
       const limit = parseInt(req.query.limit) || 60;
-      const readings2 = await storage.getLatestReadings(limit);
+      const readings3 = await storage.getLatestReadings(limit);
       const setpoints2 = await storage.getSetpoints();
       res.json({
-        readings: readings2,
+        readings: readings3,
         setpoints: {
           temp: {
             min: setpoints2.tempMin,
@@ -1822,7 +1828,7 @@ async function registerRoutes(app2) {
     try {
       const inMemoryStatus = getCurrentDeviceStatus();
       const latestReadings = await storage.getLatestReadings(1);
-      if (!latestReadings || latestReadings.length === 0) {
+      if (!readings || readings.length === 0) {
         console.log("Sem leituras no banco, usando apenas o status em mem\xF3ria:", inMemoryStatus);
         return res.json({
           timestamp: inMemoryStatus.lastUpdate,
@@ -1887,22 +1893,22 @@ async function registerRoutes(app2) {
       const diffDays = Math.ceil(diffTime / (1e3 * 60 * 60 * 24)) || 1;
       console.log(`SQL Query: Buscando leituras entre ${startDate} e ${endDate} (max: ${MAX_READINGS})`);
       console.log(`Data inicial: ${start.toLocaleDateString()}, Data final ajustada: ${new Date(end.getTime() + 864e5).toLocaleDateString()}`);
-      let readings2 = [];
+      let readings3 = [];
       try {
-        readings2 = await storage.getReadingsByDateRange(startDate, endDate, MAX_READINGS);
-        console.log(`Found ${readings2.length} readings in the local database.`);
+        readings3 = await storage.getReadingsByDateRange(startDate, endDate, MAX_READINGS);
+        console.log(`Found ${readings3.length} readings in the local database.`);
       } catch (dbError) {
         console.error("Erro ao buscar dados do banco:", dbError);
-        readings2 = [];
+        readings3 = [];
       }
-      if (readings2.length === 0) {
+      if (readings3.length === 0) {
         console.log("Nenhum dado encontrado no banco ap\xF3s importa\xE7\xE3o. Buscando do ThingSpeak diretamente...");
         try {
           console.log(`Fetching ${diffDays} days of data directly from ThingSpeak with timeout...`);
           const thingspeakReadings = await fetchHistoricalReadings(diffDays);
           if (thingspeakReadings && thingspeakReadings.length > 0) {
             console.log(`Obtidas ${thingspeakReadings.length} leituras diretamente do ThingSpeak.`);
-            readings2 = thingspeakReadings.map((r, index) => ({
+            readings3 = thingspeakReadings.map((r, index) => ({
               ...r,
               id: 1e4 + index,
               // IDs temporários
@@ -1915,17 +1921,17 @@ async function registerRoutes(app2) {
           console.error("Erro ao buscar diretamente do ThingSpeak:", thingspeakError);
         }
       }
-      if (!readings2 || readings2.length === 0) {
+      if (!readings3 || readings3.length === 0) {
         console.log("Nenhum dado dispon\xEDvel ap\xF3s todas as tentativas.");
         return res.status(404).json({
           error: "No data found for the selected period",
           message: "N\xE3o h\xE1 dados dispon\xEDveis para o per\xEDodo selecionado. Por favor, tente outro per\xEDodo."
         });
       }
-      const aggregatedReadings = aggregateReadingsByDateRange(readings2, start, end);
+      const aggregatedReadings = aggregateReadingsByDateRange(readings3, start, end);
       const setpoints2 = await storage.getSetpoints();
-      const tempStats = storage.getTemperatureStats(readings2);
-      const levelStats = storage.getLevelStats(readings2);
+      const tempStats = storage.getTemperatureStats(readings3);
+      const levelStats = storage.getLevelStats(readings3);
       res.json({
         readings: aggregatedReadings,
         // Enviamos os dados agregados
@@ -1953,11 +1959,11 @@ async function registerRoutes(app2) {
     try {
       const days = parseInt(req.query.days) || 7;
       console.log(`Fetching ${days} days of data directly from ThingSpeak...`);
-      const readings2 = await fetchHistoricalReadings(days);
-      if (readings2.length === 0) {
+      const readings3 = await fetchHistoricalReadings(days);
+      if (readings3.length === 0) {
         return res.status(404).json({ error: "No data found from ThingSpeak" });
       }
-      for (const reading of readings2) {
+      for (const reading of readings3) {
         try {
           await storage.saveReading(reading);
         } catch (err) {
@@ -1965,7 +1971,7 @@ async function registerRoutes(app2) {
         }
       }
       const setpoints2 = await storage.getSetpoints();
-      const readingsWithId = readings2.map((r) => ({
+      const readingsWithId = readings3.map((r) => ({
         ...r,
         id: 0,
         // Temporary ID for stats calculation only
@@ -1976,7 +1982,7 @@ async function registerRoutes(app2) {
       const tempStats = storage.getTemperatureStats(readingsWithId);
       const levelStats = storage.getLevelStats(readingsWithId);
       res.json({
-        readings: readings2,
+        readings: readings3,
         setpoints: {
           temp: {
             min: setpoints2.tempMin,
@@ -2180,23 +2186,6 @@ async function registerRoutes(app2) {
       });
     }
   });
-  app2.get("/api/system/uptime", async (req, res) => {
-    try {
-      const readings2 = await storage.getFirstReading();
-      const firstTimestamp = readings2?.timestamp || (/* @__PURE__ */ new Date()).toISOString();
-      res.json({
-        success: true,
-        firstReadingDate: firstTimestamp
-      });
-    } catch (error) {
-      console.error("Erro ao buscar informa\xE7\xF5es de uptime:", error);
-      res.status(500).json({
-        success: false,
-        error: "Erro ao buscar informa\xE7\xF5es de uptime",
-        firstReadingDate: (/* @__PURE__ */ new Date()).toISOString()
-      });
-    }
-  });
   app2.post("/api/sync/thingspeak-to-db", async (req, res) => {
     try {
       const days = parseInt(req.query.days || req.body.days) || 7;
@@ -2275,12 +2264,15 @@ app.use((req, res, next) => {
   } else {
     serveStatic(app);
   }
-  const port = 5e3;
+  const PORT = process.env.PORT || 5e3;
+  const HOST = "0.0.0.0";
+  console.log(`Starting server in ${process.env.NODE_ENV || "development"} mode`);
+  console.log(`Using port: ${PORT}`);
   server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true
+    port: PORT,
+    host: HOST
   }, () => {
-    log(`serving on port ${port}`);
+    log(`\u{1F680} Server running on ${HOST}:${PORT}`);
+    log(`Environment: ${process.env.NODE_ENV || "development"}`);
   });
 })();
