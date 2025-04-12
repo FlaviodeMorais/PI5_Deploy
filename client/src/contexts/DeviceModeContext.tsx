@@ -53,52 +53,37 @@ const DeviceModeContext = createContext<DeviceModeContextType>({
 });
 
 export function DeviceModeProvider({ children }: { children: React.ReactNode }) {
-  // Recuperar modo salvo do localStorage ou usar o padrão
-  const savedMode = localStorage.getItem('aquaponia_device_mode') as DeviceMode | null;
-  const [mode, setMode] = useState<DeviceMode>(savedMode || 'NODEMCU');
-  const [isEmulatorEnabled, setIsEmulatorEnabled] = useState<boolean>(false);
+  // Modo fixo como NODEMCU
+  const [mode] = useState<DeviceMode>('NODEMCU');
+  const [isEmulatorEnabled] = useState<boolean>(false);
   const [emulatorConfig, setEmulatorConfig] = useState<EmulatorConfig | null>(null);
 
-  // Verificar se o emulador está ativo e obter sua configuração
+  // Efeito para parar o emulador se estiver em execução
   useEffect(() => {
-    const checkEmulatorStatus = async () => {
+    const stopEmulator = async () => {
       try {
-        const response = await fetch('/api/emulator/status');
-        const data = await response.json();
-        setIsEmulatorEnabled(data.enabled);
-        setEmulatorConfig(data.config);
-        
-        // Se o emulador estiver ativo, definir o modo como EMULATOR
-        if (data.enabled && mode !== 'EMULATOR') {
-          setMode('EMULATOR');
-        } else if (!data.enabled && mode !== 'NODEMCU') {
-          setMode('NODEMCU');
-        }
+        await fetch('/api/emulator/stop', { method: 'POST' });
+        console.log('Emulador desativado permanentemente');
       } catch (error) {
-        console.error('Erro ao verificar status do emulador:', error);
-        setIsEmulatorEnabled(false);
+        console.error('Erro ao desativar emulador:', error);
       }
     };
     
-    // Verificar inicialmente
-    checkEmulatorStatus();
+    // Parar emulador ao iniciar o aplicativo
+    stopEmulator();
     
-    // Configurar intervalo para verificar periodicamente
-    const interval = setInterval(checkEmulatorStatus, 10000);
-    
-    return () => clearInterval(interval);
-  }, [mode]);
+  }, []);
   
-  // Salvar modo no localStorage quando mudar
-  useEffect(() => {
-    localStorage.setItem('aquaponia_device_mode', mode);
-  }, [mode]);
-
-  // Alternar entre os modos
+  // Função toggle que não faz nada (mantida para compatibilidade)
   const toggleMode = () => {
-    const newMode = mode === 'NODEMCU' ? 'EMULATOR' : 'NODEMCU';
-    setMode(newMode);
-    localStorage.setItem('aquaponia_device_mode', newMode);
+    console.log('Alternância de modo desativada');
+    return;
+  };
+  
+  // Função setMode que não faz nada (mantida para compatibilidade)
+  const setMode = () => {
+    console.log('Definição de modo desativada');
+    return;
   };
 
   // Aplicar configurações do sistema (emulador e nodeMCU) e salvar no localStorage

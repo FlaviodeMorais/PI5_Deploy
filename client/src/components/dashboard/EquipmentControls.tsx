@@ -58,7 +58,7 @@ export function EquipmentControls({
       // Envia atualização para API com timestamp para evitar cache
       const timestamp = new Date().getTime();
       console.log(`Enviando atualização para API com timestamp ${timestamp}...`);
-      const result = await updateHeaterStatus(newStatus);
+      const result = await updateHeaterStatus(newStatus); //This line uses the existing API call, assuming it now correctly targets the device.
 
       console.log('Resposta da API para alteração do aquecedor:', result);
 
@@ -110,7 +110,7 @@ export function EquipmentControls({
       // Envia atualização para API com timestamp para evitar cache
       const timestamp = new Date().getTime();
       console.log(`Enviando atualização para API com timestamp ${timestamp}...`);
-      const result = await updatePumpStatus(newStatus);
+      const result = await updatePumpStatus(newStatus); //This line uses the existing API call, assuming it now correctly targets the device.
 
       console.log('Resposta da API para alteração da bomba:', result);
 
