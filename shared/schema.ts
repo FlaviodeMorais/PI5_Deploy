@@ -48,6 +48,9 @@ export const settings = pgTable("settings", {
   levelWarningMin: integer("level_warning_min").default(60).notNull(),
   levelWarningMax: integer("level_warning_max").default(85).notNull(),
   levelCriticalMax: integer("level_critical_max").default(90).notNull(),
+  chartType: text("chart_type").default("classic").notNull(),
+  darkMode: boolean("dark_mode").default(false).notNull(),
+  use24HourTime: boolean("use_24_hour_time").default(true).notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
