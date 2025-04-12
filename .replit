@@ -60,11 +60,11 @@ args = "git add ."
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "git commit -m \"Sincronização automática a partir do Replit\""
+args = "git commit -m \"Sincronização do projeto Aquaponia PI5 a partir do Replit\""
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "git push -u origin main"
+args = "git push -f origin main"
 
 [[workflows.workflow]]
 name = "Testar Deploy"
