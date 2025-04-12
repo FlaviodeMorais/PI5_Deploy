@@ -199,12 +199,13 @@ async function fetchThingspeakReadingsFallback(): Promise<ReadingsResponse> {
     const DEFAULT_TEMP = 25.5;
     const DEFAULT_LEVEL = 74.2;
     
-    // Extrair valores com fallback para valores padrão se forem nulos ou inválidos
+    // Extrair valores com fallback para valores padrão apenas se forem nulos ou indefinidos
+    // Preservar o valor 0 se ele for realmente reportado pelo sistema
     const temperature = data.field1 !== null && data.field1 !== undefined ? 
-      parseFloat(data.field1) || DEFAULT_TEMP : DEFAULT_TEMP;
+      (parseFloat(data.field1) === 0 ? 0 : parseFloat(data.field1) || DEFAULT_TEMP) : DEFAULT_TEMP;
       
     const level = data.field2 !== null && data.field2 !== undefined ? 
-      parseFloat(data.field2) || DEFAULT_LEVEL : DEFAULT_LEVEL;
+      (parseFloat(data.field2) === 0 ? 0 : parseFloat(data.field2) || DEFAULT_LEVEL) : DEFAULT_LEVEL;
       
     const pumpStatus = data.field3 === '1' || data.field3 === 1;
     const heaterStatus = data.field4 === '1' || data.field4 === 1;

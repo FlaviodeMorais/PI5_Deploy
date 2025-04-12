@@ -92,9 +92,9 @@ export function Sidebar() {
                 </div>
                 <span className={cn("text-xl font-semibold text-white transition-all duration-300", 
                   isUpdating && previousTemp !== latestReading?.temperature && "text-blue-300 animate-pulse font-bold")}>
-                  {latestReading?.temperature && latestReading.temperature > 0 
+                  {latestReading?.temperature !== undefined && latestReading?.temperature !== null
                     ? formatNumber(latestReading.temperature) + " °C" 
-                    : isLoading ? "Carregando..." : "Sem dados"}
+                    : isLoading ? "Carregando..." : "0 °C"} {/* Display 0 instead of "Sem dados" */}
                 </span>
                 {latestReading?.temperature === 0 && !isLoading && (
                   <span className="text-xs text-amber-400 ml-1" title="Clique para recarregar" onClick={() => refetch()}>
@@ -110,9 +110,9 @@ export function Sidebar() {
                 </div>
                 <span className={cn("text-xl font-semibold text-white transition-all duration-300", 
                   isUpdating && previousLevel !== latestReading?.level && "text-blue-300 animate-pulse font-bold")}>
-                  {latestReading?.level !== undefined && latestReading.level > 0 
+                  {latestReading?.level !== undefined && latestReading?.level !== null
                     ? formatNumber(latestReading.level * 100) + " %" 
-                    : isLoading ? "Carregando..." : "Sem dados"}
+                    : isLoading ? "Carregando..." : "0 %"} {/* Display 0 instead of "Sem dados" */}
                 </span>
                 {(latestReading?.level === 0 || latestReading?.level === undefined) && !isLoading && (
                   <span className="text-xs text-amber-400 ml-1" title="Clique para recarregar" onClick={() => refetch()}>
