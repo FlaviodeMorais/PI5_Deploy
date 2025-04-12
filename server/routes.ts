@@ -7,6 +7,13 @@ import { syncThingspeakToDatabase } from './syncDatabase';
 import { 
   fetchLatestReading, 
   fetchHistoricalReadings, 
+
+  // Health check endpoint para monitoramento no Render
+  apiRouter.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok', environment: process.env.NODE_ENV });
+  });
+
+
   updateDeviceStatus,
   updatePumpStatus,
   updateHeaterStatus,

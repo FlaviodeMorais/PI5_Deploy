@@ -1,0 +1,24 @@
+
+services:
+  - type: web
+    name: aquaponia-pi5
+    env: node
+    plan: free
+    buildCommand: npm run render-build
+    startCommand: npm run render-start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: THINGSPEAK_READ_API_KEY
+        value: 5UWNQD21RD2A7QHG
+      - key: THINGSPEAK_WRITE_API_KEY
+        value: 9NG6QLIN8UXLE2AH
+      - key: THINGSPEAK_CHANNEL_ID
+        value: 2840207
+      - key: REFRESH_INTERVAL
+        value: 30000
+      - key: TZ
+        value: America/Sao_Paulo
+    healthCheckPath: /api/health
