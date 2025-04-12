@@ -25,7 +25,7 @@ export function Sidebar() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [previousTemp, setPreviousTemp] = useState<number | null>(null);
   const [previousLevel, setPreviousLevel] = useState<number | null>(null);
-  
+
   // Buscar dados para o status do sistema e valores monitorados
   const { data, isLoading, dataUpdatedAt, refetch } = useQuery({
     queryKey: ['/api/readings/latest/sidebar'],
@@ -39,30 +39,30 @@ export function Sidebar() {
 
   // Pegar a leitura mais recente
   const latestReading = data?.readings.length ? data.readings[data.readings.length - 1] : undefined;
-  
+
   // Efeito para mostrar animação de atualização quando os dados mudam
   useEffect(() => {
     if (!latestReading) return;
-    
+
     // Verificar se os valores mudaram
     const currentTemp = latestReading.temperature;
     const currentLevel = latestReading.level;
-    
+
     const tempChanged = previousTemp !== null && previousTemp !== currentTemp;
     const levelChanged = previousLevel !== null && previousLevel !== currentLevel;
-    
+
     // Se algum valor mudou, mostrar animação de atualização
     if (tempChanged || levelChanged) {
       setIsUpdating(true);
-      
+
       // Remover a animação após 1 segundo
       const timer = setTimeout(() => {
         setIsUpdating(false);
       }, 1000);
-      
+
       return () => clearTimeout(timer);
     }
-    
+
     // Atualizar valores anteriores
     setPreviousTemp(currentTemp);
     setPreviousLevel(currentLevel);
@@ -102,7 +102,7 @@ export function Sidebar() {
                   </span>
                 )}
               </div>
-              
+
               {/* Nível d'água */}
               <div className="flex items-center gap-3">
                 <div className={cn("text-blue-400 text-xl", isUpdating && "animate-pulse")}>
@@ -123,7 +123,7 @@ export function Sidebar() {
             </div>
           )}
         </div>
-        
+
         {/* Status do Sistema */}
         <div className="mb-4 mt-5 border-t border-white/5 pt-4">
           <SystemStatus 
