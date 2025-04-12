@@ -9,6 +9,10 @@ echo "======================================"
 echo "  INICIANDO DEPLOY DO AQUAPONIA PI5"
 echo "======================================"
 
+# Definir variáveis de ambiente para produção
+export NODE_ENV=production
+export PORT=5000
+
 # Verifica se o ambiente está configurado
 if [ ! -f .env ]; then
   echo "❌ Arquivo .env não encontrado! Criando arquivo com configurações padrão..."
