@@ -2,7 +2,7 @@ import { PumpControl } from './PumpControl';
 import { HeaterControl } from './HeaterControl';
 import { Reading } from '@shared/schema';
 import { updateHeaterStatus, updatePumpStatus, getDeviceStatus } from '@/lib/thingspeakApi';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 
 interface EquipmentControlsProps {
