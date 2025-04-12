@@ -1,5 +1,5 @@
 import express, { type Request, Response, NextFunction, Router } from "express";
-import { registerRoutes } from "./routes";
+import { registerRoutes } from "./routes.ts";
 import { setupVite, serveStatic, log } from "./vite";
 import cors from 'cors';
 
