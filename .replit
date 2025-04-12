@@ -23,6 +23,24 @@ args = "npm run build"
 task = "shell.exec"
 args = "npm run dev"
 
+[[workflows.workflow]]
+name = "Backup"
+author = 40607213
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "bash backup_project.sh"
+
+[[workflows.workflow]]
+name = "Deploy"
+author = 40607213
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "bash deploy.sh"
+
 [[ports]]
 localPort = 5000
 externalPort = 80
