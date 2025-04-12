@@ -111,7 +111,7 @@ export function Sidebar() {
                 <span className={cn("text-xl font-semibold text-white transition-all duration-300", 
                   isUpdating && previousLevel !== latestReading?.level && "text-blue-300 animate-pulse font-bold")}>
                   {latestReading?.level !== undefined && latestReading?.level !== null
-                    ? formatNumber(latestReading.level * 100) + " %" 
+                    ? formatNumber(latestReading.level) + " %" 
                     : isLoading ? "Carregando..." : "0 %"} {/* Display 0 instead of "Sem dados" */}
                 </span>
                 {(latestReading?.level === 0 || latestReading?.level === undefined) && !isLoading && (
