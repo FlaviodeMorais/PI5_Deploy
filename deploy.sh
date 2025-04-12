@@ -11,9 +11,9 @@ echo "======================================"
 
 # Definir variáveis de ambiente para produção
 export NODE_ENV=production
-export PORT=5000
+export PORT=${PORT:-5000}
 
-# Verifica se o ambiente está configurado
+# Criar arquivo .env se não existir
 if [ ! -f .env ]; then
   echo "❌ Arquivo .env não encontrado! Criando arquivo com configurações padrão..."
   cat > .env << EOL
