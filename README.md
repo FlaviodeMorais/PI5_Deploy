@@ -269,11 +269,3 @@ Para replicar este processo de deploy:
 6. Clique em "Create Web Service" para iniciar o processo de deploy
 7. O Render.com automatizará o processo de build e deploy da aplicação
 8. Após a conclusão, o sistema estará disponível na URL fornecida pelo Render
-
-O deploy no Render.com oferece vantagens como escalonamento automático, SSL gratuito, CI/CD integrado com o GitHub, e monitoramento de saúde do aplicativo.
-
-## Credenciais ThingSpeak
-
-- **Canal**: 000000
-- **Chave de Leitura**: key
-- **Chave de Escrita**: key
