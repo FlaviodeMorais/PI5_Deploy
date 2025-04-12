@@ -66,7 +66,7 @@ O Sistema de Monitoramento Aquapônico é uma solução IoT completa para o gere
 ```
 ┌─────────────┐    ┌───────────┐    ┌─────────────┐    ┌─────────────┐
 │  Sensores/  │    │           │    │             │    │             │
-│  Atuadores  │<-->│ ThingSpeak │<-->│  Backend    │<-->│  Frontend   │
+│  Atuadores  │<-->│ThingSpeak │<-->│  Backend    │<-->│  Frontend   │
 │  (NodeMCU)  │    │           │    │             │    │             │
 └─────────────┘    └───────────┘    └─────────────┘    └─────────────┘
 ```
