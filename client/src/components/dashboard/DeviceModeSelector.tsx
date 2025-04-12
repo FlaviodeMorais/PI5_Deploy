@@ -66,126 +66,79 @@ export function DeviceModeSelector() {
 
   const handleModeChange = async () => {
     if (isLoading) {
-      console.log('Operação já em andamento, ignorando clique');
-      return; // Evita múltiplos cliques enquanto está processando
+      console.log("Operação já em andamento, ignorando clique");
+      return;
     }
 
     try {
       setIsLoading(true);
       console.log(`Alterando modo de ${mode} para ${mode === 'NODEMCU' ? 'EMULATOR' : 'NODEMCU'}...`);
 
-      // Adicionar timestamp para evitar cache
-      const timestamp = new Date().getTime();
-
+      // Se estamos no modo NODEMCU, queremos mudar para EMULATOR (iniciar emulador)
       if (mode === 'NODEMCU') {
-        // Mudar para modo emulador
-        console.log('Enviando requisição para iniciar emulador...');
-        const response = await fetch(`/api/emulator/start?t=${timestamp}`, {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache'
-          },
-        });
-
-        const responseText = await response.text();
-        setLastApiResponse(responseText);
-        console.log('Resposta bruta da API (iniciar):', responseText);
-
-        if (!response.ok) {
-          throw new Error(`Falha ao iniciar o emulador: ${response.status} - ${responseText}`);
-        }
-
-        let data;
-        try {
-          data = JSON.parse(responseText);
-        } catch (e) {
-          console.error('Erro ao processar resposta JSON:', e);
-          throw new Error(`Resposta inválida do servidor: ${responseText}`);
-        }
-
-        if (data.success) {
-          console.log('Emulador iniciado com sucesso:', data);
-          setEmulatorStatus({ enabled: true });
-
-          // Invalidar caches de consulta para forçar recarregamento dos dados
-          queryClient.invalidateQueries({ queryKey: ['readings'] });
-          queryClient.invalidateQueries({ queryKey: ['deviceStatus'] });
-
-          // Atualizar modo na UI
-          toggleMode();
-
-          toast({
-            title: "Emulador iniciado",
-            description: "O modo de emulação foi ativado com sucesso."
-          });
-        } else {
-          throw new Error(data.message || "Erro ao iniciar emulador");
-        }
-      } 
-      else {
-        // Mudar para modo NodeMCU
-        console.log('Enviando requisição para parar emulador...');
-        const response = await fetch(`/api/emulator/stop?t=${timestamp}`, {
+        console.log("Iniciando emulador...");
+        const response = await fetch('/api/emulator/start', {
           method: 'POST',
           headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache'
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache'
+          },
+          body: JSON.stringify({
+            updateInterval: 5000,
+            mode: 'fluctuating',
+            scenarioName: "normal"
+          })
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Falha ao iniciar o emulador (${response.status}): ${errorText}`);
+        }
+
+        // Importante: mude o modo APÓS receber resposta de sucesso
+        toggleMode();
+
+        toast({
+          title: "Emulador iniciado",
+          description: "Modo de emulação ativado com sucesso."
+        });
+      } 
+      // Se estamos no modo EMULATOR, queremos mudar para NODEMCU (parar emulador)
+      else if (mode === 'EMULATOR') {
+        console.log("Parando emulador...");
+        const response = await fetch('/api/emulator/stop', {
+          method: 'POST',
+          headers: {
+            'Cache-Control': 'no-cache'
           }
         });
 
-        const responseText = await response.text();
-        setLastApiResponse(responseText);
-        console.log('Resposta bruta da API (parar):', responseText);
-
         if (!response.ok) {
-          throw new Error(`Falha ao parar o emulador: ${response.status} - ${responseText}`);
+          const errorText = await response.text();
+          throw new Error(`Falha ao parar o emulador (${response.status}): ${errorText}`);
         }
 
-        let data;
-        try {
-          data = JSON.parse(responseText);
-        } catch (e) {
-          console.error('Erro ao processar resposta JSON:', e);
-          throw new Error(`Resposta inválida do servidor: ${responseText}`);
-        }
+        // Importante: mude o modo APÓS receber resposta de sucesso
+        toggleMode();
 
-        if (data.success) {
-          console.log('Emulador parado com sucesso:', data);
-          setEmulatorStatus({ enabled: false });
-
-          // Invalidar caches de consulta para forçar recarregamento dos dados
-          queryClient.invalidateQueries({ queryKey: ['readings'] });
-          queryClient.invalidateQueries({ queryKey: ['deviceStatus'] });
-
-          // Atualizar modo na UI
-          toggleMode();
-
-          toast({
-            title: "Emulador parado",
-            description: "O modo de emulação foi desativado com sucesso."
-          });
-        } else {
-          throw new Error(data.message || "Erro ao parar emulador");
-        }
+        toast({
+          title: "Emulador parado",
+          description: "Voltando para modo hardware físico."
+        });
       }
+
+      // Verifica o status do emulador após a operação
+      await checkEmulatorStatus();
+
     } catch (error) {
       console.error('Erro na alternância de modos:', error);
-
       toast({
-        variant: "destructive",
-        title: "Erro na alternância",
-        description: `Falha ao alternar o modo: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+        title: "Erro ao alternar modos",
+        description: `${error instanceof Error ? error.message : String(error)}`,
+        variant: "destructive"
       });
     } finally {
-      setTimeout(() => {
-        setIsLoading(false);
-        console.log('Estado de carregamento removido');
-
-        // Verificar status atual após um pequeno atraso
-        checkEmulatorStatus();
-      }, 1000);
+      setIsLoading(false);
     }
   };
 
