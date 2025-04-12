@@ -1,3 +1,4 @@
+
 #!/bin/bash
 
 # Script de Deploy para o Projeto Aquaponia
