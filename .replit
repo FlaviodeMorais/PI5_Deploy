@@ -60,19 +60,11 @@ args = "git add --all"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "git reset -- *.db"
+args = "git status"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "git reset -- *.sqlite"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "git reset -- aquaponia.db"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "git commit -m \"Sincronização do projeto Aquaponia PI5 a partir do Replit\""
+args = "git commit -m \"Sincronização completa do projeto Aquaponia PI5 incluindo banco de dados\""
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"

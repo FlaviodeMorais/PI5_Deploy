@@ -1,7 +1,8 @@
-﻿# Arquivos sensíveis
+# Arquivos sensíveis
 .env
-*.db
-*.sqlite
+# Arquivos de banco de dados são agora sincronizados com o repositório
+# *.db
+# *.sqlite
 
 # Pastas de dependências
 node_modules/
