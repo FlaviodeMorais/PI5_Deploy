@@ -8,6 +8,101 @@ var __export = (target, all) => {
     __defProp(target, name, { get: all[name], enumerable: true });
 };
 
+// server/services/databaseService.ts
+import sqlite3 from "sqlite3";
+import { open } from "sqlite";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+async function createDb() {
+  let needsInit = false;
+  if (!fs.existsSync(DB_PATH)) {
+    needsInit = true;
+    const dir = path.dirname(DB_PATH);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+  } else {
+    const stats = fs.statSync(DB_PATH);
+    if (stats.size === 0) {
+      needsInit = true;
+    }
+  }
+  if (needsInit) {
+    console.log("\u{1F4C1} Criando ou recriando banco de dados:", DB_PATH);
+    if (fs.existsSync(DB_PATH)) {
+      fs.unlinkSync(DB_PATH);
+    }
+  }
+  const db = await open({
+    filename: DB_PATH,
+    driver: sqlite3.Database
+  });
+  console.log("\u{1F504} Connected to database");
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS readings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      temperature REAL NOT NULL,
+      level REAL NOT NULL,
+      pump_status INTEGER DEFAULT 0,
+      heater_status INTEGER DEFAULT 0,
+      timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS setpoints (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      temp_min REAL DEFAULT 20.0 NOT NULL,
+      temp_max REAL DEFAULT 30.0 NOT NULL,
+      level_min INTEGER DEFAULT 60 NOT NULL,
+      level_max INTEGER DEFAULT 90 NOT NULL,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS settings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      system_name TEXT DEFAULT 'Aquaponia' NOT NULL,
+      update_interval INTEGER DEFAULT 1 NOT NULL,
+      data_retention INTEGER DEFAULT 30 NOT NULL,
+      email_alerts INTEGER DEFAULT 1 NOT NULL,
+      push_alerts INTEGER DEFAULT 1 NOT NULL,
+      alert_email TEXT,
+      temp_critical_min REAL DEFAULT 18.0 NOT NULL,
+      temp_warning_min REAL DEFAULT 20.0 NOT NULL,
+      temp_warning_max REAL DEFAULT 28.0 NOT NULL,
+      temp_critical_max REAL DEFAULT 30.0 NOT NULL,
+      level_critical_min INTEGER DEFAULT 50 NOT NULL,
+      level_warning_min INTEGER DEFAULT 60 NOT NULL,
+      level_warning_max INTEGER DEFAULT 85 NOT NULL,
+      level_critical_max INTEGER DEFAULT 90 NOT NULL,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_readings_timestamp ON readings(timestamp);
+  `);
+  console.log("\u2705 Database tables created successfully");
+  await db.run(`
+    INSERT INTO setpoints (id, temp_min, temp_max, level_min, level_max)
+    SELECT 1, 20.0, 30.0, 60, 90
+    WHERE NOT EXISTS (SELECT 1 FROM setpoints WHERE id = 1);
+  `);
+  await db.run(`
+    INSERT INTO settings (id)
+    SELECT 1
+    WHERE NOT EXISTS (SELECT 1 FROM settings WHERE id = 1);
+  `);
+  console.log("\u2705 Database initialized with default values");
+  return db;
+}
+var __filename, __dirname, DB_PATH;
+var init_databaseService = __esm({
+  "server/services/databaseService.ts"() {
+    "use strict";
+    __filename = fileURLToPath(import.meta.url);
+    __dirname = path.dirname(__filename);
+    DB_PATH = path.resolve(process.cwd(), "aquaponia.db");
+  }
+});
+
 // server/services/thingspeakConfig.ts
 import dotenv from "dotenv";
 function parseThingspeakNumber(value) {
@@ -323,172 +418,81 @@ var init_thingspeakService = __esm({
   }
 });
 
-// server/index.ts
-import express2, { Router } from "express";
-
-// server/routes.ts
-import { createServer } from "http";
-import cron from "node-cron";
-
-// server/services/databaseService.ts
-import sqlite3 from "sqlite3";
-import { open } from "sqlite";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
-var __filename = fileURLToPath(import.meta.url);
-var __dirname = path.dirname(__filename);
-var DB_PATH = path.resolve(process.cwd(), "aquaponia.db");
-async function createDb() {
-  let needsInit = false;
-  if (!fs.existsSync(DB_PATH)) {
-    needsInit = true;
-    const dir = path.dirname(DB_PATH);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-  } else {
-    const stats = fs.statSync(DB_PATH);
-    if (stats.size === 0) {
-      needsInit = true;
-    }
-  }
-  if (needsInit) {
-    console.log("\u{1F4C1} Criando ou recriando banco de dados:", DB_PATH);
-    if (fs.existsSync(DB_PATH)) {
-      fs.unlinkSync(DB_PATH);
-    }
-  }
-  const db = await open({
-    filename: DB_PATH,
-    driver: sqlite3.Database
-  });
-  console.log("\u{1F504} Connected to database");
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS readings (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      temperature REAL NOT NULL,
-      level REAL NOT NULL,
-      pump_status INTEGER DEFAULT 0,
-      heater_status INTEGER DEFAULT 0,
-      timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE TABLE IF NOT EXISTS setpoints (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      temp_min REAL DEFAULT 20.0 NOT NULL,
-      temp_max REAL DEFAULT 30.0 NOT NULL,
-      level_min INTEGER DEFAULT 60 NOT NULL,
-      level_max INTEGER DEFAULT 90 NOT NULL,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE TABLE IF NOT EXISTS settings (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      system_name TEXT DEFAULT 'Aquaponia' NOT NULL,
-      update_interval INTEGER DEFAULT 1 NOT NULL,
-      data_retention INTEGER DEFAULT 30 NOT NULL,
-      email_alerts INTEGER DEFAULT 1 NOT NULL,
-      push_alerts INTEGER DEFAULT 1 NOT NULL,
-      alert_email TEXT,
-      temp_critical_min REAL DEFAULT 18.0 NOT NULL,
-      temp_warning_min REAL DEFAULT 20.0 NOT NULL,
-      temp_warning_max REAL DEFAULT 28.0 NOT NULL,
-      temp_critical_max REAL DEFAULT 30.0 NOT NULL,
-      level_critical_min INTEGER DEFAULT 50 NOT NULL,
-      level_warning_min INTEGER DEFAULT 60 NOT NULL,
-      level_warning_max INTEGER DEFAULT 85 NOT NULL,
-      level_critical_max INTEGER DEFAULT 90 NOT NULL,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE INDEX IF NOT EXISTS idx_readings_timestamp ON readings(timestamp);
-  `);
-  console.log("\u2705 Database tables created successfully");
-  await db.run(`
-    INSERT INTO setpoints (id, temp_min, temp_max, level_min, level_max)
-    SELECT 1, 20.0, 30.0, 60, 90
-    WHERE NOT EXISTS (SELECT 1 FROM setpoints WHERE id = 1);
-  `);
-  await db.run(`
-    INSERT INTO settings (id)
-    SELECT 1
-    WHERE NOT EXISTS (SELECT 1 FROM settings WHERE id = 1);
-  `);
-  console.log("\u2705 Database initialized with default values");
-  return db;
-}
-
 // server/storage.ts
-var SqliteStorage = class {
-  db;
-  initialized = false;
-  constructor() {
-    this.init();
-  }
-  async init() {
-    try {
-      this.db = await createDb();
-      this.initialized = true;
-      console.log("\u2705 SqliteStorage initialized successfully");
-    } catch (error) {
-      console.error("\u274C Error initializing SqliteStorage:", error);
-      throw error;
-    }
-  }
-  async ensureInitialized() {
-    if (!this.initialized || !this.db) {
-      console.log("\u{1F504} Reinitializing database connection...");
-      await this.init();
-    }
-  }
-  async getLatestReadings(limit) {
-    await this.ensureInitialized();
-    return this.db.all(
-      `SELECT * FROM readings 
+var SqliteStorage, storage;
+var init_storage = __esm({
+  "server/storage.ts"() {
+    "use strict";
+    init_databaseService();
+    SqliteStorage = class {
+      db;
+      initialized = false;
+      constructor() {
+        this.init();
+      }
+      async init() {
+        try {
+          this.db = await createDb();
+          this.initialized = true;
+          console.log("\u2705 SqliteStorage initialized successfully");
+        } catch (error) {
+          console.error("\u274C Error initializing SqliteStorage:", error);
+          throw error;
+        }
+      }
+      async ensureInitialized() {
+        if (!this.initialized || !this.db) {
+          console.log("\u{1F504} Reinitializing database connection...");
+          await this.init();
+        }
+      }
+      async getLatestReadings(limit) {
+        await this.ensureInitialized();
+        return this.db.all(
+          `SELECT * FROM readings 
        ORDER BY timestamp DESC 
        LIMIT ?`,
-      [limit]
-    );
-  }
-  async getFirstReading() {
-    await this.ensureInitialized();
-    try {
-      const reading = await this.db.get(
-        `SELECT * FROM readings 
+          [limit]
+        );
+      }
+      async getFirstReading() {
+        await this.ensureInitialized();
+        try {
+          const reading = await this.db.get(
+            `SELECT * FROM readings 
          ORDER BY timestamp ASC 
          LIMIT 1`
-      );
-      if (!reading) {
-        return null;
+          );
+          if (!reading) {
+            return null;
+          }
+          return {
+            id: reading.id,
+            temperature: reading.temperature,
+            level: reading.level,
+            pumpStatus: reading.pump_status === 1,
+            heaterStatus: reading.heater_status === 1,
+            timestamp: new Date(reading.timestamp)
+          };
+        } catch (error) {
+          console.error("Erro ao buscar primeira leitura:", error);
+          return null;
+        }
       }
-      return {
-        id: reading.id,
-        temperature: reading.temperature,
-        level: reading.level,
-        pumpStatus: reading.pump_status === 1,
-        heaterStatus: reading.heater_status === 1,
-        timestamp: new Date(reading.timestamp)
-      };
-    } catch (error) {
-      console.error("Erro ao buscar primeira leitura:", error);
-      return null;
-    }
-  }
-  async getReadingsByDateRange(startDate, endDate, maxResults = 1e3) {
-    await this.ensureInitialized();
-    console.log(`SQL Query: Buscando leituras entre ${startDate} e ${endDate} (max: ${maxResults})`);
-    const adjustedEndDate = new Date(endDate);
-    adjustedEndDate.setDate(adjustedEndDate.getDate() + 1);
-    const adjustedEndDateString = adjustedEndDate.toISOString().split("T")[0];
-    console.log(`Data inicial: ${startDate}, Data final ajustada: ${adjustedEndDateString}`);
-    try {
-      const tableCheck = await this.db.get(
-        `SELECT name FROM sqlite_master WHERE type='table' AND name='readings'`
-      );
-      if (!tableCheck) {
-        console.log("Tabela 'readings' n\xE3o encontrada, recriando esquema...");
-        await this.db.exec(`
+      async getReadingsByDateRange(startDate, endDate, maxResults = 1e3) {
+        await this.ensureInitialized();
+        console.log(`SQL Query: Buscando leituras entre ${startDate} e ${endDate} (max: ${maxResults})`);
+        const adjustedEndDate = new Date(endDate);
+        adjustedEndDate.setDate(adjustedEndDate.getDate() + 1);
+        const adjustedEndDateString = adjustedEndDate.toISOString().split("T")[0];
+        console.log(`Data inicial: ${startDate}, Data final ajustada: ${adjustedEndDateString}`);
+        try {
+          const tableCheck = await this.db.get(
+            `SELECT name FROM sqlite_master WHERE type='table' AND name='readings'`
+          );
+          if (!tableCheck) {
+            console.log("Tabela 'readings' n\xE3o encontrada, recriando esquema...");
+            await this.db.exec(`
           CREATE TABLE IF NOT EXISTS readings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             temperature REAL NOT NULL,
@@ -499,252 +503,397 @@ var SqliteStorage = class {
           );
           CREATE INDEX IF NOT EXISTS idx_readings_timestamp ON readings(timestamp);
         `);
-        return [];
-      }
-      const countResult = await this.db.get("SELECT COUNT(*) as count FROM readings");
-      console.log(`Total de leituras no banco: ${countResult ? countResult.count : 0}`);
-      const readings2 = await this.db.all(
-        `SELECT * FROM readings 
+            return [];
+          }
+          const countResult = await this.db.get("SELECT COUNT(*) as count FROM readings");
+          console.log(`Total de leituras no banco: ${countResult ? countResult.count : 0}`);
+          const readings2 = await this.db.all(
+            `SELECT * FROM readings 
          WHERE datetime(timestamp) >= datetime(?) AND datetime(timestamp) <= datetime(?) 
          ORDER BY timestamp ASC
          LIMIT ?`,
-        [startDate + "T00:00:00.000Z", adjustedEndDateString + "T23:59:59.999Z", maxResults]
-      );
-      console.log(`Encontradas ${readings2.length} leituras no banco de dados para o per\xEDodo especificado.`);
-      const formattedReadings = readings2.map((reading) => ({
-        ...reading,
-        pumpStatus: reading.pump_status === 1,
-        heaterStatus: reading.heater_status === 1,
-        timestamp: new Date(reading.timestamp)
-      }));
-      return formattedReadings;
-    } catch (error) {
-      console.error("Erro ao buscar leituras do banco:", error);
-      return [];
-    }
-  }
-  async saveReading(reading) {
-    await this.ensureInitialized();
-    try {
-      const timestamp2 = reading.timestamp || /* @__PURE__ */ new Date();
-      const timestampMs = timestamp2.getTime();
-      const minTime = new Date(timestampMs - 5e3);
-      const maxTime = new Date(timestampMs + 5e3);
-      const existingRecord = await this.db.get(
-        `SELECT id FROM readings 
+            [startDate + "T00:00:00.000Z", adjustedEndDateString + "T23:59:59.999Z", maxResults]
+          );
+          console.log(`Encontradas ${readings2.length} leituras no banco de dados para o per\xEDodo especificado.`);
+          const formattedReadings = readings2.map((reading) => ({
+            ...reading,
+            pumpStatus: reading.pump_status === 1,
+            heaterStatus: reading.heater_status === 1,
+            timestamp: new Date(reading.timestamp)
+          }));
+          return formattedReadings;
+        } catch (error) {
+          console.error("Erro ao buscar leituras do banco:", error);
+          return [];
+        }
+      }
+      async saveReading(reading) {
+        await this.ensureInitialized();
+        try {
+          const timestamp2 = reading.timestamp || /* @__PURE__ */ new Date();
+          const timestampMs = timestamp2.getTime();
+          const minTime = new Date(timestampMs - 5e3);
+          const maxTime = new Date(timestampMs + 5e3);
+          const existingRecord = await this.db.get(
+            `SELECT id FROM readings 
          WHERE datetime(timestamp) BETWEEN datetime(?) AND datetime(?)
          AND pump_status = ? AND heater_status = ?
          AND ABS(temperature - ?) < 0.1
          AND ABS(level - ?) < 0.1
          ORDER BY id DESC LIMIT 1`,
-        [
-          minTime.toISOString(),
-          maxTime.toISOString(),
-          reading.pumpStatus ? 1 : 0,
-          reading.heaterStatus ? 1 : 0,
-          reading.temperature,
-          reading.level
-        ]
-      );
-      if (existingRecord) {
-        console.log(`\u26A0\uFE0F [${(/* @__PURE__ */ new Date()).toLocaleTimeString()}] Detectada leitura similar recente (ID: ${existingRecord.id}), evitando duplica\xE7\xE3o`);
-        const existingReading = await this.db.get(
-          `SELECT * FROM readings WHERE id = ?`,
-          [existingRecord.id]
-        );
-        return {
-          ...existingReading,
-          pumpStatus: existingReading.pump_status === 1,
-          heaterStatus: existingReading.heater_status === 1,
-          timestamp: new Date(existingReading.timestamp)
-        };
-      }
-      const { getCurrentDeviceStatus: getCurrentDeviceStatus2 } = await Promise.resolve().then(() => (init_thingspeakService(), thingspeakService_exports));
-      const memoryState = getCurrentDeviceStatus2();
-      const pumpStatusToLog = memoryState ? memoryState.pumpStatus : reading.pumpStatus;
-      const heaterStatusToLog = memoryState ? memoryState.heaterStatus : reading.heaterStatus;
-      console.log(`\u2705 [${(/* @__PURE__ */ new Date()).toLocaleTimeString()}] Inserindo nova leitura: Temp=${reading.temperature.toFixed(1)}\xB0C, N\xEDvel=${reading.level}%, Bomba=${pumpStatusToLog ? "ON" : "OFF"}, Aquecedor=${heaterStatusToLog ? "ON" : "OFF"}`);
-      const result = await this.db.run(
-        `INSERT INTO readings (temperature, level, pump_status, heater_status, timestamp) 
+            [
+              minTime.toISOString(),
+              maxTime.toISOString(),
+              reading.pumpStatus ? 1 : 0,
+              reading.heaterStatus ? 1 : 0,
+              reading.temperature,
+              reading.level
+            ]
+          );
+          if (existingRecord) {
+            console.log(`\u26A0\uFE0F [${(/* @__PURE__ */ new Date()).toLocaleTimeString()}] Detectada leitura similar recente (ID: ${existingRecord.id}), evitando duplica\xE7\xE3o`);
+            const existingReading = await this.db.get(
+              `SELECT * FROM readings WHERE id = ?`,
+              [existingRecord.id]
+            );
+            return {
+              ...existingReading,
+              pumpStatus: existingReading.pump_status === 1,
+              heaterStatus: existingReading.heater_status === 1,
+              timestamp: new Date(existingReading.timestamp)
+            };
+          }
+          const { getCurrentDeviceStatus: getCurrentDeviceStatus2 } = await Promise.resolve().then(() => (init_thingspeakService(), thingspeakService_exports));
+          const memoryState = getCurrentDeviceStatus2();
+          const pumpStatusToLog = memoryState ? memoryState.pumpStatus : reading.pumpStatus;
+          const heaterStatusToLog = memoryState ? memoryState.heaterStatus : reading.heaterStatus;
+          console.log(`\u2705 [${(/* @__PURE__ */ new Date()).toLocaleTimeString()}] Inserindo nova leitura: Temp=${reading.temperature.toFixed(1)}\xB0C, N\xEDvel=${reading.level}%, Bomba=${pumpStatusToLog ? "ON" : "OFF"}, Aquecedor=${heaterStatusToLog ? "ON" : "OFF"}`);
+          const result = await this.db.run(
+            `INSERT INTO readings (temperature, level, pump_status, heater_status, timestamp) 
          VALUES (?, ?, ?, ?, ?)`,
-        [
-          reading.temperature,
-          reading.level,
-          reading.pumpStatus ? 1 : 0,
-          reading.heaterStatus ? 1 : 0,
-          timestamp2
-        ]
-      );
-      return {
-        id: result.lastID,
-        ...reading,
-        timestamp: reading.timestamp || /* @__PURE__ */ new Date()
-      };
-    } catch (error) {
-      console.error("\u274C Erro ao salvar leitura no banco:", error);
-      throw error;
-    }
-  }
-  async getSetpoints() {
-    await this.ensureInitialized();
-    const setpointsData = await this.db.get("SELECT * FROM setpoints WHERE id = 1");
-    if (setpointsData) {
-      return {
-        id: setpointsData.id,
-        tempMin: setpointsData.temp_min,
-        tempMax: setpointsData.temp_max,
-        levelMin: setpointsData.level_min,
-        levelMax: setpointsData.level_max,
-        updatedAt: setpointsData.updated_at
-      };
-    }
-    const defaultSetpoints = {
-      tempMin: 20,
-      tempMax: 30,
-      levelMin: 60,
-      levelMax: 90
-    };
-    await this.db.run(`
+            [
+              reading.temperature,
+              reading.level,
+              reading.pumpStatus ? 1 : 0,
+              reading.heaterStatus ? 1 : 0,
+              timestamp2
+            ]
+          );
+          return {
+            id: result.lastID,
+            ...reading,
+            timestamp: reading.timestamp || /* @__PURE__ */ new Date()
+          };
+        } catch (error) {
+          console.error("\u274C Erro ao salvar leitura no banco:", error);
+          throw error;
+        }
+      }
+      async getSetpoints() {
+        await this.ensureInitialized();
+        const setpointsData = await this.db.get("SELECT * FROM setpoints WHERE id = 1");
+        if (setpointsData) {
+          return {
+            id: setpointsData.id,
+            tempMin: setpointsData.temp_min,
+            tempMax: setpointsData.temp_max,
+            levelMin: setpointsData.level_min,
+            levelMax: setpointsData.level_max,
+            updatedAt: setpointsData.updated_at
+          };
+        }
+        const defaultSetpoints = {
+          tempMin: 20,
+          tempMax: 30,
+          levelMin: 60,
+          levelMax: 90
+        };
+        await this.db.run(`
       INSERT INTO setpoints (temp_min, temp_max, level_min, level_max)
       VALUES (?, ?, ?, ?)
     `, [defaultSetpoints.tempMin, defaultSetpoints.tempMax, defaultSetpoints.levelMin, defaultSetpoints.levelMax]);
-    return {
-      id: 1,
-      ...defaultSetpoints,
-      updatedAt: /* @__PURE__ */ new Date()
-    };
-  }
-  async updateSetpoints(setpoints2) {
-    await this.ensureInitialized();
-    await this.db.run(
-      `UPDATE setpoints 
+        return {
+          id: 1,
+          ...defaultSetpoints,
+          updatedAt: /* @__PURE__ */ new Date()
+        };
+      }
+      async updateSetpoints(setpoints2) {
+        await this.ensureInitialized();
+        await this.db.run(
+          `UPDATE setpoints 
        SET temp_min = ?, temp_max = ?, level_min = ?, level_max = ?, updated_at = CURRENT_TIMESTAMP 
        WHERE id = 1`,
-      [setpoints2.tempMin, setpoints2.tempMax, setpoints2.levelMin, setpoints2.levelMax]
-    );
-    return this.getSetpoints();
-  }
-  async getSettings() {
-    await this.ensureInitialized();
-    const settingsData = await this.db.get("SELECT * FROM settings WHERE id = 1");
-    if (settingsData) {
-      return {
-        id: settingsData.id,
-        systemName: settingsData.system_name,
-        updateInterval: settingsData.update_interval,
-        dataRetention: settingsData.data_retention,
-        emailAlerts: !!settingsData.email_alerts,
-        pushAlerts: !!settingsData.push_alerts,
-        alertEmail: settingsData.alert_email,
-        tempCriticalMin: settingsData.temp_critical_min,
-        tempWarningMin: settingsData.temp_warning_min,
-        tempWarningMax: settingsData.temp_warning_max,
-        tempCriticalMax: settingsData.temp_critical_max,
-        levelCriticalMin: settingsData.level_critical_min,
-        levelWarningMin: settingsData.level_warning_min,
-        levelWarningMax: settingsData.level_warning_max,
-        levelCriticalMax: settingsData.level_critical_max,
-        chartType: settingsData.chart_type || "classic",
-        darkMode: !!settingsData.dark_mode,
-        use24HourTime: !!settingsData.use_24_hour_time,
-        updatedAt: settingsData.updated_at
-      };
-    }
-    await this.db.run(`
+          [setpoints2.tempMin, setpoints2.tempMax, setpoints2.levelMin, setpoints2.levelMax]
+        );
+        return this.getSetpoints();
+      }
+      async getSettings() {
+        await this.ensureInitialized();
+        const settingsData = await this.db.get("SELECT * FROM settings WHERE id = 1");
+        if (settingsData) {
+          return {
+            id: settingsData.id,
+            systemName: settingsData.system_name,
+            updateInterval: settingsData.update_interval,
+            dataRetention: settingsData.data_retention,
+            emailAlerts: !!settingsData.email_alerts,
+            pushAlerts: !!settingsData.push_alerts,
+            alertEmail: settingsData.alert_email,
+            tempCriticalMin: settingsData.temp_critical_min,
+            tempWarningMin: settingsData.temp_warning_min,
+            tempWarningMax: settingsData.temp_warning_max,
+            tempCriticalMax: settingsData.temp_critical_max,
+            levelCriticalMin: settingsData.level_critical_min,
+            levelWarningMin: settingsData.level_warning_min,
+            levelWarningMax: settingsData.level_warning_max,
+            levelCriticalMax: settingsData.level_critical_max,
+            chartType: settingsData.chart_type || "classic",
+            darkMode: !!settingsData.dark_mode,
+            use24HourTime: !!settingsData.use_24_hour_time,
+            updatedAt: settingsData.updated_at
+          };
+        }
+        await this.db.run(`
       INSERT INTO settings (id) VALUES (1)
     `);
-    const newSettingsData = await this.db.get("SELECT * FROM settings WHERE id = 1");
-    if (newSettingsData) {
-      return {
-        id: newSettingsData.id,
-        systemName: newSettingsData.system_name || "Aquaponia",
-        updateInterval: newSettingsData.update_interval || 1,
-        dataRetention: newSettingsData.data_retention || 30,
-        emailAlerts: !!newSettingsData.email_alerts,
-        pushAlerts: !!newSettingsData.push_alerts,
-        alertEmail: newSettingsData.alert_email,
-        tempCriticalMin: newSettingsData.temp_critical_min || 18,
-        tempWarningMin: newSettingsData.temp_warning_min || 20,
-        tempWarningMax: newSettingsData.temp_warning_max || 28,
-        tempCriticalMax: newSettingsData.temp_critical_max || 30,
-        levelCriticalMin: newSettingsData.level_critical_min || 50,
-        levelWarningMin: newSettingsData.level_warning_min || 60,
-        levelWarningMax: newSettingsData.level_warning_max || 85,
-        levelCriticalMax: newSettingsData.level_critical_max || 90,
-        chartType: newSettingsData.chart_type || "classic",
-        darkMode: !!newSettingsData.dark_mode,
-        use24HourTime: !!newSettingsData.use_24_hour_time,
-        updatedAt: newSettingsData.updated_at || /* @__PURE__ */ new Date()
-      };
-    }
-    return {
-      id: 1,
-      systemName: "Aquaponia",
-      updateInterval: 1,
-      dataRetention: 30,
-      emailAlerts: true,
-      pushAlerts: true,
-      alertEmail: null,
-      tempCriticalMin: 18,
-      tempWarningMin: 20,
-      tempWarningMax: 28,
-      tempCriticalMax: 30,
-      levelCriticalMin: 50,
-      levelWarningMin: 60,
-      levelWarningMax: 85,
-      levelCriticalMax: 90,
-      chartType: "classic",
-      darkMode: false,
-      use24HourTime: true,
-      updatedAt: /* @__PURE__ */ new Date()
-    };
-  }
-  async updateSettings(settings2) {
-    await this.ensureInitialized();
-    const columns = Object.keys(settings2).map((key) => `${this.toSnakeCase(key)} = ?`).join(", ");
-    const values = Object.values(settings2);
-    await this.db.run(
-      `UPDATE settings 
+        const newSettingsData = await this.db.get("SELECT * FROM settings WHERE id = 1");
+        if (newSettingsData) {
+          return {
+            id: newSettingsData.id,
+            systemName: newSettingsData.system_name || "Aquaponia",
+            updateInterval: newSettingsData.update_interval || 1,
+            dataRetention: newSettingsData.data_retention || 30,
+            emailAlerts: !!newSettingsData.email_alerts,
+            pushAlerts: !!newSettingsData.push_alerts,
+            alertEmail: newSettingsData.alert_email,
+            tempCriticalMin: newSettingsData.temp_critical_min || 18,
+            tempWarningMin: newSettingsData.temp_warning_min || 20,
+            tempWarningMax: newSettingsData.temp_warning_max || 28,
+            tempCriticalMax: newSettingsData.temp_critical_max || 30,
+            levelCriticalMin: newSettingsData.level_critical_min || 50,
+            levelWarningMin: newSettingsData.level_warning_min || 60,
+            levelWarningMax: newSettingsData.level_warning_max || 85,
+            levelCriticalMax: newSettingsData.level_critical_max || 90,
+            chartType: newSettingsData.chart_type || "classic",
+            darkMode: !!newSettingsData.dark_mode,
+            use24HourTime: !!newSettingsData.use_24_hour_time,
+            updatedAt: newSettingsData.updated_at || /* @__PURE__ */ new Date()
+          };
+        }
+        return {
+          id: 1,
+          systemName: "Aquaponia",
+          updateInterval: 1,
+          dataRetention: 30,
+          emailAlerts: true,
+          pushAlerts: true,
+          alertEmail: null,
+          tempCriticalMin: 18,
+          tempWarningMin: 20,
+          tempWarningMax: 28,
+          tempCriticalMax: 30,
+          levelCriticalMin: 50,
+          levelWarningMin: 60,
+          levelWarningMax: 85,
+          levelCriticalMax: 90,
+          chartType: "classic",
+          darkMode: false,
+          use24HourTime: true,
+          updatedAt: /* @__PURE__ */ new Date()
+        };
+      }
+      async updateSettings(settings2) {
+        await this.ensureInitialized();
+        const columns = Object.keys(settings2).map((key) => `${this.toSnakeCase(key)} = ?`).join(", ");
+        const values = Object.values(settings2);
+        await this.db.run(
+          `UPDATE settings 
        SET ${columns}, updated_at = CURRENT_TIMESTAMP 
        WHERE id = 1`,
-      values
+          values
+        );
+        return this.getSettings();
+      }
+      toSnakeCase(str) {
+        return str.replace(/([A-Z])/g, "_$1").toLowerCase();
+      }
+      getTemperatureStats(readings2) {
+        if (readings2.length === 0) {
+          return { avg: 0, min: 0, max: 0, stdDev: 0 };
+        }
+        const temperatures = readings2.map((r) => r.temperature);
+        const avg = temperatures.reduce((sum, t) => sum + t, 0) / temperatures.length;
+        const min = Math.min(...temperatures);
+        const max = Math.max(...temperatures);
+        const squareDiffs = temperatures.map((value) => Math.pow(value - avg, 2));
+        const avgSquareDiff = squareDiffs.reduce((sum, diff) => sum + diff, 0) / squareDiffs.length;
+        const stdDev = Math.sqrt(avgSquareDiff);
+        return { avg, min, max, stdDev };
+      }
+      getLevelStats(readings2) {
+        if (readings2.length === 0) {
+          return { avg: 0, min: 0, max: 0, stdDev: 0 };
+        }
+        const levels = readings2.map((r) => r.level);
+        const avg = levels.reduce((sum, l) => sum + l, 0) / levels.length;
+        const min = Math.min(...levels);
+        const max = Math.max(...levels);
+        const squareDiffs = levels.map((value) => Math.pow(value - avg, 2));
+        const avgSquareDiff = squareDiffs.reduce((sum, diff) => sum + diff, 0) / squareDiffs.length;
+        const stdDev = Math.sqrt(avgSquareDiff);
+        return { avg, min, max, stdDev };
+      }
+    };
+    storage = new SqliteStorage();
+  }
+});
+
+// server/services/diagnosticService.ts
+var diagnosticService_exports = {};
+__export(diagnosticService_exports, {
+  runDiagnostics: () => runDiagnostics
+});
+async function runDiagnostics() {
+  console.log("\u{1F50D} Iniciando diagn\xF3stico do sistema...");
+  try {
+    const dbStatus = await checkDatabaseConnection();
+    const deviceConsistency = await checkDeviceStateConsistency();
+    const dataIntegrity = await checkDataIntegrity();
+    return {
+      timestamp: /* @__PURE__ */ new Date(),
+      dbStatus,
+      deviceConsistency,
+      dataIntegrity,
+      history: diagnosticHistory
+    };
+  } catch (error) {
+    console.error("\u274C Erro durante diagn\xF3stico:", error);
+    return {
+      timestamp: /* @__PURE__ */ new Date(),
+      error: String(error),
+      history: diagnosticHistory
+    };
+  }
+}
+async function checkDatabaseConnection() {
+  try {
+    const readings2 = await storage.getLatestReadings(1);
+    const status = readings2 && readings2.length > 0;
+    addDiagnosticRecord(
+      "db_connection",
+      status ? "Conex\xE3o com banco de dados OK" : "Falha na conex\xE3o com banco de dados",
+      status
     );
-    return this.getSettings();
+    return { success: status };
+  } catch (error) {
+    addDiagnosticRecord("db_connection", `Erro ao conectar ao banco: ${error}`, false);
+    return { success: false, error: String(error) };
   }
-  toSnakeCase(str) {
-    return str.replace(/([A-Z])/g, "_$1").toLowerCase();
-  }
-  getTemperatureStats(readings2) {
-    if (readings2.length === 0) {
-      return { avg: 0, min: 0, max: 0, stdDev: 0 };
+}
+async function checkDeviceStateConsistency() {
+  try {
+    const memoryState = getCurrentDeviceStatus();
+    const readings2 = await storage.getLatestReadings(1);
+    if (!readings2 || readings2.length === 0) {
+      addDiagnosticRecord("device_consistency", "Sem leituras no banco para comparar", false);
+      return { success: false, details: "No database readings" };
     }
-    const temperatures = readings2.map((r) => r.temperature);
-    const avg = temperatures.reduce((sum, t) => sum + t, 0) / temperatures.length;
-    const min = Math.min(...temperatures);
-    const max = Math.max(...temperatures);
-    const squareDiffs = temperatures.map((value) => Math.pow(value - avg, 2));
-    const avgSquareDiff = squareDiffs.reduce((sum, diff) => sum + diff, 0) / squareDiffs.length;
-    const stdDev = Math.sqrt(avgSquareDiff);
-    return { avg, min, max, stdDev };
+    const dbState = {
+      pumpStatus: Boolean(readings2[0].pump_status),
+      heaterStatus: Boolean(readings2[0].heater_status)
+    };
+    const isPumpConsistent = memoryState.pumpStatus === dbState.pumpStatus;
+    const isHeaterConsistent = memoryState.heaterStatus === dbState.heaterStatus;
+    const isConsistent = isPumpConsistent && isHeaterConsistent;
+    const details = {
+      memory: memoryState,
+      database: dbState,
+      isPumpConsistent,
+      isHeaterConsistent
+    };
+    addDiagnosticRecord(
+      "device_consistency",
+      isConsistent ? "Estado dos dispositivos consistente" : "Inconsist\xEAncia detectada no estado dos dispositivos",
+      isConsistent
+    );
+    return { success: isConsistent, details };
+  } catch (error) {
+    addDiagnosticRecord("device_consistency", `Erro ao verificar consist\xEAncia: ${error}`, false);
+    return { success: false, error: String(error) };
   }
-  getLevelStats(readings2) {
-    if (readings2.length === 0) {
-      return { avg: 0, min: 0, max: 0, stdDev: 0 };
+}
+async function checkDataIntegrity() {
+  try {
+    const lastHourReadings = await storage.getLatestReadings(60);
+    if (!lastHourReadings || lastHourReadings.length < 2) {
+      addDiagnosticRecord("data_integrity", "N\xE3o h\xE1 dados suficientes para an\xE1lise", false);
+      return { success: false, details: "Insufficient data" };
     }
-    const levels = readings2.map((r) => r.level);
-    const avg = levels.reduce((sum, l) => sum + l, 0) / levels.length;
-    const min = Math.min(...levels);
-    const max = Math.max(...levels);
-    const squareDiffs = levels.map((value) => Math.pow(value - avg, 2));
-    const avgSquareDiff = squareDiffs.reduce((sum, diff) => sum + diff, 0) / squareDiffs.length;
-    const stdDev = Math.sqrt(avgSquareDiff);
-    return { avg, min, max, stdDev };
+    const intervals = [];
+    for (let i = 1; i < lastHourReadings.length; i++) {
+      const current = new Date(lastHourReadings[i - 1].timestamp).getTime();
+      const previous = new Date(lastHourReadings[i].timestamp).getTime();
+      intervals.push(current - previous);
+    }
+    const avgInterval = intervals.reduce((sum, val) => sum + val, 0) / intervals.length;
+    const maxInterval = Math.max(...intervals);
+    const hasGaps = maxInterval > avgInterval * 3;
+    addDiagnosticRecord(
+      "data_integrity",
+      hasGaps ? `Detectados buracos nos dados (m\xE1x ${maxInterval}ms vs m\xE9dia ${avgInterval.toFixed(0)}ms)` : "Integridade dos dados OK",
+      !hasGaps
+    );
+    return {
+      success: !hasGaps,
+      details: {
+        averageInterval: avgInterval,
+        maxInterval,
+        readingsCount: lastHourReadings.length
+      }
+    };
+  } catch (error) {
+    addDiagnosticRecord("data_integrity", `Erro ao verificar integridade: ${error}`, false);
+    return { success: false, error: String(error) };
   }
-};
-var storage = new SqliteStorage();
+}
+function addDiagnosticRecord(type, description, resolved) {
+  diagnosticHistory.push({
+    timestamp: /* @__PURE__ */ new Date(),
+    type,
+    description,
+    resolved
+  });
+  if (diagnosticHistory.length > 100) {
+    diagnosticHistory.shift();
+  }
+  if (resolved) {
+    console.log(`\u2705 Diagn\xF3stico [${type}]: ${description}`);
+  } else {
+    console.log(`\u26A0\uFE0F Diagn\xF3stico [${type}]: ${description}`);
+  }
+}
+var diagnosticHistory;
+var init_diagnosticService = __esm({
+  "server/services/diagnosticService.ts"() {
+    "use strict";
+    init_storage();
+    init_thingspeakService();
+    diagnosticHistory = [];
+  }
+});
+
+// server/index.ts
+import express2, { Router } from "express";
+
+// server/routes.ts
+init_storage();
+import { createServer } from "http";
+import cron from "node-cron";
 
 // server/syncDatabase.ts
 init_thingspeakService();
+init_storage();
 
 // server/vite.ts
 import express from "express";
@@ -1966,6 +2115,24 @@ async function registerRoutes(app2) {
       res.status(500).json({
         success: false,
         error: "Falha na sincroniza\xE7\xE3o do backup",
+        details: error instanceof Error ? error.message : "Erro desconhecido"
+      });
+    }
+  });
+  app2.get("/api/diagnostic", async (req, res) => {
+    try {
+      const { runDiagnostics: runDiagnostics2 } = await Promise.resolve().then(() => (init_diagnosticService(), diagnosticService_exports));
+      const result = await runDiagnostics2();
+      res.json({
+        success: true,
+        timestamp: /* @__PURE__ */ new Date(),
+        diagnosticResult: result
+      });
+    } catch (error) {
+      console.error("Error running diagnostics:", error);
+      res.status(500).json({
+        success: false,
+        error: "Falha ao executar diagn\xF3stico",
         details: error instanceof Error ? error.message : "Erro desconhecido"
       });
     }
