@@ -41,6 +41,31 @@ mode = "sequential"
 task = "shell.exec"
 args = "bash deploy.sh"
 
+[[workflows.workflow]]
+name = "GitHub Sync"
+author = 40607213
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "git config --global user.name \"Flavio de Morais\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "git config --global user.email \"flaviodemorais@users.noreply.github.com\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "git add ."
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "git commit -m \"Sincronização automática a partir do Replit\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "git push -u origin main"
+
 [[ports]]
 localPort = 5000
 externalPort = 80
