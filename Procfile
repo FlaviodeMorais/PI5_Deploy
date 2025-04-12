@@ -1,2 +1,2 @@
 
-web: npm run render-start
+web: npm start

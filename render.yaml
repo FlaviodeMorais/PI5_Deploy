@@ -3,9 +3,8 @@ services:
   - type: web
     name: aquaponia-pi5
     env: node
-    plan: free
-    buildCommand: npm run render-build
-    startCommand: npm run render-start
+    buildCommand: npm install && npm run build
+    startCommand: node dist/index.js
     envVars:
       - key: NODE_ENV
         value: production
@@ -22,3 +21,4 @@ services:
       - key: TZ
         value: America/Sao_Paulo
     healthCheckPath: /api/health
+    plan: free

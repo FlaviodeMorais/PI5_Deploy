@@ -1,53 +1,70 @@
 
 #!/bin/bash
 
-# Script de Deploy para o Projeto Aquaponia
-# Desenvolvido para o Projeto Integrador V - UNIVESP
-# DRP04-PJI510-SALA-001GRUPO-012
+echo "🌱 Deploy do Sistema de Monitoramento e Controle Aquapônico para o Render"
+echo "=====================================================================\n"
 
-echo "======================================"
-echo "  INICIANDO DEPLOY DO AQUAPONIA PI5"
-echo "======================================"
+# Definir variáveis de ambiente para produção
+export NODE_ENV=production
+export PORT=${PORT:-10000}
 
-# Verifica se o ambiente está configurado
+# Criar arquivo .env se não existir
 if [ ! -f .env ]; then
   echo "❌ Arquivo .env não encontrado! Criando arquivo com configurações padrão..."
   cat > .env << EOL
-# Configurações ThingSpeak
+NODE_ENV=production
+PORT=10000
 THINGSPEAK_READ_API_KEY=5UWNQD21RD2A7QHG
 THINGSPEAK_WRITE_API_KEY=9NG6QLIN8UXLE2AH
 THINGSPEAK_CHANNEL_ID=2840207
-
-# Configurações do sistema
-NODE_ENV=production
-PORT=5000
-
-# Intervalo de atualização (em milissegundos)
 REFRESH_INTERVAL=30000
-
-# Configurações de timezone
 TZ=America/Sao_Paulo
 EOL
   echo "✅ Arquivo .env criado com sucesso!"
+else
+  echo "✅ Arquivo .env encontrado!"
 fi
 
-# Instala dependências
-echo "📦 Instalando dependências..."
+# Instalar dependências
+echo "\n📦 Instalando dependências..."
 npm install
-echo "✅ Dependências instaladas com sucesso!"
-
-# Compila a aplicação
-echo "🔨 Compilando o projeto..."
-npm run build
-echo "✅ Projeto compilado com sucesso!"
-
-# Verifica se a compilação foi bem-sucedida
-if [ ! -d dist ]; then
-  echo "❌ Erro durante a compilação! Diretório 'dist' não encontrado."
+if [ $? -ne 0 ]; then
+  echo "❌ Erro ao instalar dependências!"
   exit 1
 fi
+echo "✅ Dependências instaladas com sucesso!"
 
-# Inicia a aplicação
-echo "🚀 Iniciando a aplicação em modo de produção..."
-echo "======================================"
-NODE_ENV=production node dist/index.js
+# Construir o projeto
+echo "\n🏗️ Construindo o projeto..."
+npm run build
+if [ $? -ne 0 ]; then
+  echo "❌ Erro ao construir o projeto!"
+  exit 1
+fi
+echo "✅ Projeto construído com sucesso!"
+
+# Verificar se o processo já está em execução
+PID=$(pgrep -f "node dist/index.js")
+if [ ! -z "$PID" ]; then
+  echo "\n🛑 Parando a instância anterior (PID: $PID)..."
+  kill -15 $PID
+  sleep 2
+  
+  # Verificar se ainda está em execução
+  if ps -p $PID > /dev/null; then
+    echo "⚠️ Força parando o processo..."
+    kill -9 $PID
+  fi
+  
+  echo "✅ Instância anterior finalizada!"
+fi
+
+# Iniciar o servidor em background
+echo "\n🚀 Iniciando o servidor em produção..."
+nohup node dist/index.js > server.log 2>&1 &
+NEW_PID=$!
+
+echo "✅ Servidor iniciado com sucesso (PID: $NEW_PID)!"
+echo "\n🎉 Deploy concluído! O servidor está rodando em http://localhost:$PORT"
+echo "\n📄 Confira os logs em server.log"
+echo "\n👉 Para parar o servidor: kill -15 $NEW_PID"

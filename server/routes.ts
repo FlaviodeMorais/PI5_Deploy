@@ -1,4 +1,5 @@
-import type { Express } from "express";
+
+import type { Express, Router } from "express";
 import { createServer, type Server } from "http";
 import cron from "node-cron";
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -7,13 +8,6 @@ import { syncThingspeakToDatabase } from './syncDatabase';
 import { 
   fetchLatestReading, 
   fetchHistoricalReadings, 
-
-  // Health check endpoint para monitoramento no Render
-  apiRouter.get('/health', (req, res) => {
-    res.status(200).json({ status: 'ok', environment: process.env.NODE_ENV });
-  });
-
-
   updateDeviceStatus,
   updatePumpStatus,
   updateHeaterStatus,
@@ -26,8 +20,13 @@ import { insertSetpointSchema, insertSettingsSchema } from "@shared/schema";
 import { z } from "zod";
 import { aggregateReadingsByDateRange } from "./utils/dataAggregation";
 
-export async function registerRoutes(app: Express): Promise<Server> {
+export async function registerRoutes(app: Express, apiRouter: Router): Promise<Server> {
   const httpServer = createServer(app);
+
+  // Health check endpoint para monitoramento no Render
+  apiRouter.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok', environment: process.env.NODE_ENV });
+  });
 
   // Schedule data collection using the configured REFRESH_INTERVAL (5 minutes)
   // Calcular o intervalo em segundos para o cron a partir do REFRESH_INTERVAL em ms
@@ -106,7 +105,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const latestReadings = await storage.getLatestReadings(1);
 
       // Verificar se há dados no banco
-      if (!latestReadings || latestReadings.length === 0) {
+      if (!readings || readings.length === 0) {
         // Se não há dados no banco, retornar apenas o status em memória com aviso
         console.log('Sem leituras no banco, usando apenas o status em memória:', inMemoryStatus);
         return res.json({
@@ -548,27 +547,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: false, 
         error: 'Falha ao obter estatísticas do backup',
         details: error instanceof Error ? error.message : 'Erro desconhecido' 
-      });
-    }
-  });
-
-  // Rota para obter informações de uptime do sistema
-  app.get('/api/system/uptime', async (req, res) => {
-    try {
-      // Buscar a primeira (mais antiga) leitura no banco
-      const readings = await storage.getFirstReading();
-      const firstTimestamp = readings?.timestamp || new Date().toISOString();
-
-      res.json({ 
-        success: true, 
-        firstReadingDate: firstTimestamp
-      });
-    } catch (error) {
-      console.error('Erro ao buscar informações de uptime:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Erro ao buscar informações de uptime',
-        firstReadingDate: new Date().toISOString()
       });
     }
   });
