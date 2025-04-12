@@ -105,7 +105,7 @@ export async function registerRoutes(app: Express, apiRouter: Router): Promise<S
       const latestReadings = await storage.getLatestReadings(1);
 
       // Verificar se há dados no banco
-      if (!readings || readings.length === 0) {
+      if (!latestReadings || latestReadings.length === 0) {
         // Se não há dados no banco, retornar apenas o status em memória com aviso
         console.log('Sem leituras no banco, usando apenas o status em memória:', inMemoryStatus);
         return res.json({
