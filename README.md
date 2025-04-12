@@ -391,6 +391,49 @@ O processo de deploy inclui:
 - Configuração do ambiente de produção
 - Inicialização do servidor otimizado
 
+## Deploy em Produção
+
+O sistema pode ser implantado de duas formas diferentes:
+
+### 1. Deploy Local
+
+Execute o script de deploy incluído no projeto:
+```
+./deploy.sh
+```
+
+Este script configura o ambiente, instala dependências, compila a aplicação e inicia o servidor em modo de produção.
+
+### 2. Deploy no Render.com (Hospedagem na Nuvem)
+
+O sistema está atualmente hospedado no Render.com e disponível em: [https://drp04-pji510-pi-v.onrender.com/](https://drp04-pji510-pi-v.onrender.com/)
+
+Para replicar este processo de deploy:
+
+1. Crie uma conta no [Render.com](https://render.com/)
+2. Conecte sua conta GitHub ao Render
+3. Crie um novo Web Service no dashboard do Render
+4. Selecione o repositório GitHub: `https://github.com/FlaviodeMorais/PI5_Deploy`
+5. Configure as seguintes opções:
+   - **Nome**: Escolha um nome para o serviço (ex: drp04-pji510-pi-v)
+   - **Runtime**: Node
+   - **Build Command**: `npm install && npm run build`
+   - **Start Command**: `node dist/index.js`
+   - **Variáveis de Ambiente**:
+     - `NODE_ENV`: production
+     - `PORT`: 10000
+     - `THINGSPEAK_READ_API_KEY`: 5UWNQD21RD2A7QHG
+     - `THINGSPEAK_WRITE_API_KEY`: 9NG6QLIN8UXLE2AH
+     - `THINGSPEAK_CHANNEL_ID`: 2840207
+     - `REFRESH_INTERVAL`: 30000
+     - `TZ`: America/Sao_Paulo
+
+6. Clique em "Create Web Service" para iniciar o processo de deploy
+7. O Render.com automatizará o processo de build e deploy da aplicação
+8. Após a conclusão, o sistema estará disponível na URL fornecida pelo Render
+
+O deploy no Render.com oferece vantagens como escalonamento automático, SSL gratuito, CI/CD integrado com o GitHub, e monitoramento de saúde do aplicativo.
+
 ## Credenciais ThingSpeak
 
 - **Canal**: 2840207
