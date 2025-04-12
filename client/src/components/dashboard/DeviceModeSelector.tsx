@@ -1,5 +1,5 @@
 
-import React from 'react';
+import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { useDeviceMode } from '@/contexts/DeviceModeContext';

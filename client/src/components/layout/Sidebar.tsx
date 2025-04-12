@@ -5,13 +5,8 @@ import { getLatestReadings } from "@/lib/thingspeakApi";
 import { SystemStatus } from '@/components/dashboard/SystemStatus';
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatNumber } from '@/lib/utils';
-import { useState, useEffect } from 'react';
-import { lazy } from 'react';
-
-// Importação dinâmica do seletor de modo
-const dynamic = {
-  DeviceModeSelector: lazy(() => import('@/components/dashboard/DeviceModeSelector').then(mod => ({ default: mod.DeviceModeSelector })))
-};
+import { useState, useEffect, Suspense } from 'react';
+import { DeviceModeSelector } from '@/components/dashboard/DeviceModeSelector';
 
 const navItems = [
   {
@@ -160,9 +155,9 @@ export function Sidebar() {
 
         {/* Seletor de Modo NodeMCU/Emulador */}
         <div className="px-2 pb-2 mt-4 border-t border-white/5 pt-4">
-          <React.Suspense fallback={<div>Carregando...</div>}>
-            <dynamic.DeviceModeSelector />
-          </React.Suspense>
+          <Suspense fallback={<div>Carregando...</div>}>
+            <DeviceModeSelector />
+          </Suspense>
         </div>
         <hr className="divider" />
 
