@@ -51,9 +51,22 @@ export function HistoricalData() {
       if (dbData && dbData.readings && dbData.setpoints && dbData.stats) {
         // Limitar a quantidade de dados para renderização
         const limitedReadings = dbData.readings.slice(0, 100);
+        
+        // Corrigir as estatísticas para garantir que estão dentro dos limites
+        const correctedStats = {
+          ...dbData.stats,
+          level: {
+            ...dbData.stats.level,
+            min: Math.max(0, dbData.stats.level.min),
+            max: Math.min(100, dbData.stats.level.max),
+            avg: Math.min(Math.max(dbData.stats.level.avg, 0), 100)
+          }
+        };
+        
         return {
           ...dbData,
-          readings: limitedReadings
+          readings: limitedReadings,
+          stats: correctedStats
         };
       }
       return undefined;
@@ -267,15 +280,15 @@ export function HistoricalData() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mt-4 sm:mt-6">
               <div className="bg-[#0f172a] border border-white/5 p-3 sm:p-4 rounded-md">
                 <p className="text-xs sm:text-sm text-gray-400 mb-1">Média</p>
-                <p className="text-base sm:text-xl font-semibold">{formatNumber(Math.min(Math.max(processedData.stats.level.avg, 0), 100)).toFixed(2)}%</p>
+                <p className="text-base sm:text-xl font-semibold">{formatNumber(processedData.stats.level.avg).toFixed(2)}%</p>
               </div>
               <div className="bg-[#0f172a] border border-white/5 p-3 sm:p-4 rounded-md">
                 <p className="text-xs sm:text-sm text-gray-400 mb-1">Mínima</p>
-                <p className="text-base sm:text-xl font-semibold">{formatNumber(Math.max(processedData.stats.level.min, 0)).toFixed(2)}%</p>
+                <p className="text-base sm:text-xl font-semibold">{formatNumber(processedData.stats.level.min).toFixed(2)}%</p>
               </div>
               <div className="bg-[#0f172a] border border-white/5 p-3 sm:p-4 rounded-md">
                 <p className="text-xs sm:text-sm text-gray-400 mb-1">Máxima</p>
-                <p className="text-base sm:text-xl font-semibold">{formatNumber(Math.min(processedData.stats.level.max, 100)).toFixed(2)}%</p>
+                <p className="text-base sm:text-xl font-semibold">{formatNumber(processedData.stats.level.max).toFixed(2)}%</p>
               </div>
               <div className="bg-[#0f172a] border border-white/5 p-3 sm:p-4 rounded-md">
                 <p className="text-xs sm:text-sm text-gray-400 mb-1">Desvio Padrão</p>
