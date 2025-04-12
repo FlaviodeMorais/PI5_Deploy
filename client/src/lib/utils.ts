@@ -28,7 +28,7 @@ export function formatFullDate(date: Date): string {
     day: 'numeric',
     timeZone: 'America/Sao_Paulo'
   };
-  
+
   return date.toLocaleDateString('pt-BR', options);
 }
 
@@ -41,7 +41,7 @@ export function formatTime(date: Date): string {
     hour12: false,
     timeZone: 'America/Sao_Paulo'
   };
-  
+
   return date.toLocaleTimeString('pt-BR', options);
 }
 
@@ -57,13 +57,13 @@ export function formatDateTime(date: Date): string {
     hour12: false,
     timeZone: 'America/Sao_Paulo'
   };
-  
+
   return date.toLocaleString('pt-BR', options);
 }
 
 // Format number to fixed decimal places
 export function formatNumber(value: number | null | undefined, decimals = 1): string {
-  if (value === null || value === undefined) {
+  if (value === null || value === undefined || isNaN(value)) {
     return '0';
   }
   return value.toFixed(decimals);
@@ -74,7 +74,7 @@ export function getLastNDaysRange(days = 7): { startDate: string, endDate: strin
   const endDate = new Date();
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - days);
-  
+
   return {
     startDate: startDate.toISOString().split('T')[0],
     endDate: endDate.toISOString().split('T')[0]

@@ -215,19 +215,19 @@ export function HistoricalData() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mt-4 sm:mt-6">
               <div className="bg-[#0f172a] border border-white/5 p-3 sm:p-4 rounded-md">
                 <p className="text-xs sm:text-sm text-gray-400 mb-1">Média</p>
-                <p className="text-base sm:text-xl font-semibold">{formatNumber(processedData.stats.temperature.avg)}°C</p>
+                <p className="text-base sm:text-xl font-semibold">{formatNumber(processedData.stats.temperature.avg).toFixed(2)}°C</p>
               </div>
               <div className="bg-[#0f172a] border border-white/5 p-3 sm:p-4 rounded-md">
                 <p className="text-xs sm:text-sm text-gray-400 mb-1">Mínima</p>
-                <p className="text-base sm:text-xl font-semibold">{formatNumber(processedData.stats.temperature.min)}°C</p>
+                <p className="text-base sm:text-xl font-semibold">{formatNumber(processedData.stats.temperature.min).toFixed(2)}°C</p>
               </div>
               <div className="bg-[#0f172a] border border-white/5 p-3 sm:p-4 rounded-md">
                 <p className="text-xs sm:text-sm text-gray-400 mb-1">Máxima</p>
-                <p className="text-base sm:text-xl font-semibold">{formatNumber(processedData.stats.temperature.max)}°C</p>
+                <p className="text-base sm:text-xl font-semibold">{formatNumber(processedData.stats.temperature.max).toFixed(2)}°C</p>
               </div>
               <div className="bg-[#0f172a] border border-white/5 p-3 sm:p-4 rounded-md">
                 <p className="text-xs sm:text-sm text-gray-400 mb-1">Desvio Padrão</p>
-                <p className="text-base sm:text-xl font-semibold">±{formatNumber(processedData.stats.temperature.stdDev || 0)}°C</p>
+                <p className="text-base sm:text-xl font-semibold">±{(formatNumber(processedData.stats.temperature.stdDev || 0)).toFixed(2)}°C</p>
               </div>
             </div>
           )}
@@ -292,7 +292,7 @@ export function HistoricalData() {
               </div>
               <div className="bg-[#0f172a] border border-white/5 p-3 sm:p-4 rounded-md">
                 <p className="text-xs sm:text-sm text-gray-400 mb-1">Desvio Padrão</p>
-                <p className="text-base sm:text-xl font-semibold">±{formatNumber(processedData.stats.level.stdDev || 0).toFixed(2)}%</p>
+                <p className="text-base sm:text-xl font-semibold">±{(formatNumber(processedData.stats.level.stdDev || 0)).toFixed(2)}%</p>
               </div>
             </div>
           )}
