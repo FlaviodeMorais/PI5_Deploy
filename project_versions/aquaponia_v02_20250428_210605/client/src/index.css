@@ -1,0 +1,342 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 222 47% 11%; /* #0f172a */
+    --foreground: 0 0% 100%;
+    
+    --card: 223 47% 11%; /* #0f172a */
+    --card-foreground: 0 0% 100%;
+    
+    --popover: 223 47% 11%;
+    --popover-foreground: 0 0% 100%;
+    
+    --primary: 210 74% 57%;  /* #5090d3 */
+    --primary-foreground: 0 0% 100%;
+    
+    --secondary: 217 33% 17%; /* #1e293b */
+    --secondary-foreground: 0 0% 100%;
+    
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    
+    --accent: 265 65% 42%; /* #9c27b0 */
+    --accent-foreground: 0 0% 100%;
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 210 74% 57%;
+    
+    --radius: 0.8rem;
+    
+    /* Chart colors */
+    --chart-1: 210 74% 57%; /* #5090d3 */
+    --chart-2: 250 74% 60%; /* #6C5DD3 */
+    --chart-3: 187 100% 42.4%; /* #00B5D8 */
+    --chart-4: 152 69% 31%; /* #2E7D32 */
+    --chart-5: 215.3 79.1% 66.7%; /* #60a5fa */
+    
+    /* Sidebar colors */
+    --sidebar-background: 217 33% 17%; /* #1e293b */
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 210 74% 57%; /* #5090d3 */
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 100%;
+    --sidebar-accent-foreground: 0 0% 0%;
+    --sidebar-border: 215 25% 27%;
+    --sidebar-ring: 210 74% 57%;
+  }
+  
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', sans-serif;
+    font-weight: 300;
+  }
+  
+  /* Custom utility classes */
+  .gradient-purple {
+    @apply bg-gradient-to-r from-[#9c27b0] to-[#6a1b9a];
+    box-shadow: 0 4px 12px rgba(156, 39, 176, 0.2);
+  }
+  
+  .gradient-green {
+    @apply bg-gradient-to-r from-[#4caf50] to-[#2e7d32];
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+  }
+  
+  .gradient-red {
+    @apply bg-gradient-to-r from-[#ef5350] to-[#d32f2f];
+    box-shadow: 0 4px 12px rgba(239, 83, 80, 0.2);
+  }
+  
+  .gradient-blue {
+    @apply bg-gradient-to-r from-[#5090d3] to-[#3a70b3];
+    box-shadow: 0 4px 12px rgba(80, 144, 211, 0.2);
+  }
+  
+  .gradient-cyan {
+    @apply bg-gradient-to-r from-[#0ea5e9] to-[#0284c7];
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.2);
+  }
+  
+  .gradient-orange {
+    @apply bg-gradient-to-r from-[#f97316] to-[#c2410c];
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.2);
+  }
+}
+
+/* Dark mode custom styling for Aquaponia */
+/* Animações */
+@keyframes float {
+  0% {
+    transform: translateY(0) translateX(0);
+  }
+  25% {
+    transform: translateY(-15px) translateX(15px);
+  }
+  50% {
+    transform: translateY(0) translateX(0);
+  }
+  75% {
+    transform: translateY(15px) translateX(-15px);
+  }
+  100% {
+    transform: translateY(0) translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@layer components {
+  .card-aquaponia {
+    @apply bg-[#0f172a]/90 backdrop-blur-sm rounded-xl shadow-lg border border-[#1e293b] overflow-hidden transition-all duration-500;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 0 1px rgba(255, 255, 255, 0.1);
+  }
+
+  .card-aquaponia:hover {
+    @apply border-[#1e40af]/30;
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.4), 0 0 2px rgba(37, 99, 235, 0.3);
+  }
+
+  .card-aquaponia-header {
+    @apply text-white font-light text-xl py-4 px-6 flex items-center justify-between border-b border-[#1e293b]/80;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(to right, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.8));
+  }
+
+  .card-aquaponia-content {
+    @apply p-6 text-white;
+    background: linear-gradient(to bottom, rgba(15, 23, 42, 0.7), rgba(10, 15, 30, 0.8));
+  }
+
+  /* Cards de monitoramento */
+  .monitor-card {
+    @apply bg-gradient-to-b from-[#111827]/90 to-[#0c1024]/95 backdrop-blur-sm rounded-xl shadow-md border border-[#1e293b];
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  
+  .monitor-card:hover {
+    @apply border-blue-900/50;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(59, 130, 246, 0.1);
+    transform: translateY(-4px);
+  }
+
+  .monitor-value {
+    @apply font-light text-3xl text-white;
+    text-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+    animation: pulse 4s infinite ease-in-out;
+  }
+
+  .monitor-label {
+    @apply text-white/70 font-light text-sm tracking-wide;
+  }
+
+  /* Valores estatísticos */
+  .stat-value {
+    @apply font-light text-white text-xl;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+  }
+
+  .stat-label {
+    @apply text-white/60 text-xs font-light uppercase tracking-wider;
+  }
+
+  /* Controladores */
+  .control-card {
+    @apply rounded-xl bg-gradient-to-b from-[#111827]/90 to-[#0c1024]/95 backdrop-blur-sm p-5 border border-[#1e293b];
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    background-size: 200% 200%;
+  }
+  
+  .control-card:hover {
+    @apply border-[#2e4166];
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transform: translateY(-4px) scale(1.01);
+  }
+  
+  .control-card-active {
+    @apply rounded-xl p-5 border border-blue-700/50;
+    background: linear-gradient(135deg, rgba(30, 58, 138, 0.4), rgba(30, 64, 175, 0.6));
+    background-size: 200% 200%;
+    animation: gradientShift 8s infinite ease;
+    box-shadow: 0 10px 30px rgba(37, 99, 235, 0.3), inset 0 1px 0 rgba(59, 130, 246, 0.2);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    backdrop-filter: blur(10px);
+  }
+  
+  .control-card-active:hover {
+    @apply border-blue-600/60;
+    box-shadow: 0 15px 40px rgba(37, 99, 235, 0.4), inset 0 1px 0 rgba(59, 130, 246, 0.3);
+    transform: translateY(-4px) scale(1.02);
+  }
+
+  /* Efeitos de iluminação e destaque */
+  .glow-effect {
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+    border: 1px solid rgba(59, 130, 246, 0.1);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .glow-effect::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(59, 130, 246, 0.1),
+      transparent
+    );
+    transition: all 0.8s ease;
+  }
+  
+  .glow-effect:hover {
+    box-shadow: 0 0 25px rgba(59, 130, 246, 0.3);
+  }
+  
+  .glow-effect:hover::after {
+    left: 150%;
+  }
+
+  .glow-text {
+    text-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+    transition: all 0.3s ease;
+    animation: pulse 4s infinite ease-in-out;
+  }
+
+  .glow-border {
+    @apply border border-[#1e293b] transition-all duration-300;
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .glow-border::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    z-index: -1;
+    background: linear-gradient(45deg, #1e40af, #3b82f6, #60a5fa, #1e40af);
+    background-size: 400% 400%;
+    border-radius: inherit;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+
+  .glow-border:hover {
+    @apply border-transparent;
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+  }
+  
+  .glow-border:hover::before {
+    opacity: 0.5;
+    animation: gradientShift 3s infinite linear;
+  }
+  
+  /* Botões e elementos interativos */
+  .btn-aquaponia {
+    @apply rounded-lg py-2 px-4 font-light transition-all duration-300 backdrop-blur-sm;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+  }
+  
+  .btn-aquaponia::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background: linear-gradient(45deg, #1e40af40, #3b82f640);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .btn-aquaponia:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+  
+  .btn-aquaponia:hover::before {
+    opacity: 1;
+  }
+  
+  /* Glassmorphism Effect */
+  .glass-card {
+    @apply bg-white/5 backdrop-blur-lg rounded-xl border border-white/10 shadow-xl;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  
+  .glass-card:hover {
+    @apply border-blue-600/30;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(59, 130, 246, 0.2);
+    transform: translateY(-4px);
+  }
+}
